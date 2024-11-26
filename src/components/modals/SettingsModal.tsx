@@ -20,13 +20,32 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data } = await supabase
+      // First try to get existing settings
+      const { data: existingSettings } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingSettings) return existingSettings;
+
+      // If no settings exist, create default settings
+      const { data: newSettings, error: insertError } = await supabase
+        .from('settings')
+        .insert([{ user_id: user.id }])
+        .select()
         .single();
 
-      return data;
+      if (insertError) {
+        toast({
+          title: "Error",
+          description: "Failed to create settings",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      return newSettings;
     },
   });
 
