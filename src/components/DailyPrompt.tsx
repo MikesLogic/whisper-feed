@@ -11,7 +11,7 @@ export const DailyPrompt = () => {
         .from('daily_prompts')
         .select('*')
         .eq('active_date', today)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
