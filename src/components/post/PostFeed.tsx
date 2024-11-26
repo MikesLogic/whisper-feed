@@ -11,17 +11,17 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
         .from('posts')
         .select(`
           *,
-          profiles:author_id (username),
-          likes (count),
-          comments (count)
+          profiles!posts_author_id_fkey (username),
+          likes:likes(count),
+          comments:comments(count)
         `);
 
       switch (filter) {
         case "popular":
-          query = query.order('likes.count', { ascending: false });
+          query = query.order('likes(count)', { ascending: false });
           break;
         case "commented":
-          query = query.order('comments.count', { ascending: false });
+          query = query.order('comments(count)', { ascending: false });
           break;
         case "following":
           // TODO: Implement following filter
