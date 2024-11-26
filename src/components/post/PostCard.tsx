@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { CommentSection } from "./CommentSection";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface PostCardProps {
   post: {
@@ -13,6 +14,7 @@ interface PostCardProps {
     content: string;
     created_at: string;
     is_anonymous: boolean;
+    author_id: string;
     profiles: {
       username: string;
     };
@@ -23,7 +25,6 @@ interface PostCardProps {
 
 export const PostCard = ({ post }: PostCardProps) => {
   const [isLiking, setIsLiking] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -59,7 +60,6 @@ export const PostCard = ({ post }: PostCardProps) => {
         }
       }
 
-      // Invalidate queries to refresh the post feed
       queryClient.invalidateQueries({ queryKey: ["posts"] });
 
       toast({
@@ -104,17 +104,22 @@ export const PostCard = ({ post }: PostCardProps) => {
               <Heart className="w-4 h-4" />
               {post.likes[0]?.count || 0}
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => setShowComments(!showComments)}
-            >
-              <MessageSquare className="w-4 h-4" />
-              {post.comments[0]?.count || 0}
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {post.comments[0]?.count || 0}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+                <CommentSection postId={post.id} isAnonymousPost={post.is_anonymous} originalPosterId={post.author_id} />
+              </SheetContent>
+            </Sheet>
           </div>
-          {showComments && <CommentSection postId={post.id} />}
         </div>
       </div>
     </div>

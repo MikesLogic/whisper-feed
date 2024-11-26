@@ -9,13 +9,25 @@ import { formatDistanceToNow } from "date-fns";
 
 interface CommentSectionProps {
   postId: string;
+  isAnonymousPost: boolean;
+  originalPosterId: string;
 }
 
-export const CommentSection = ({ postId }: CommentSectionProps) => {
+export const CommentSection = ({ postId, isAnonymousPost, originalPosterId }: CommentSectionProps) => {
   const [newComment, setNewComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  const canPostAnonymously = isAnonymousPost && currentUser?.id === originalPosterId;
 
   const { data: comments, isLoading } = useQuery({
     queryKey: ["comments", postId],
@@ -46,16 +58,18 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!currentUser) throw new Error("Not authenticated");
+
+      // Only allow anonymous comments if the post is anonymous and the commenter is the original poster
+      const finalIsAnonymous = canPostAnonymously ? isAnonymous : false;
 
       const { error } = await supabase
         .from('comments')
         .insert({
           content: newComment,
           post_id: postId,
-          author_id: user.id,
-          is_anonymous: isAnonymous,
+          author_id: currentUser.id,
+          is_anonymous: finalIsAnonymous,
         });
 
       if (error) throw error;
@@ -102,7 +116,8 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
   };
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="space-y-4">
+      <h3 className="font-semibold text-lg">Comments</h3>
       <form onSubmit={handleSubmit} className="space-y-2">
         <Input
           placeholder="Write a comment..."
@@ -110,15 +125,17 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
           onChange={(e) => setNewComment(e.target.value)}
         />
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAnonymous}
-              onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="rounded"
-            />
-            Anonymous
-          </label>
+          {canPostAnonymously && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="rounded"
+              />
+              Anonymous
+            </label>
+          )}
           <Button type="submit">Comment</Button>
         </div>
       </form>
@@ -143,14 +160,16 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     <span className="text-sm text-gray-500">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(comment.id)}
-                      className="h-8 w-8"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {currentUser?.id === comment.author_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(comment.id)}
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-700 mt-1">{comment.content}</p>
