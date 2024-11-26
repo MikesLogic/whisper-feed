@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { Menu, Bell, Settings, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CreatePost } from "@/components/post/CreatePost";
+import { PostFeed } from "@/components/post/PostFeed";
+import { DailyPrompt } from "@/components/DailyPrompt";
+import { ProfileCard } from "@/components/ProfileCard";
+import { Navigation } from "@/components/Navigation";
 
 interface Profile {
   username: string;
@@ -15,8 +19,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { toast } = useToast();
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [postContent, setPostContent] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -65,24 +67,6 @@ const Index = () => {
     });
   };
 
-  const handlePost = async () => {
-    if (!postContent.trim()) {
-      toast({
-        title: "Error",
-        description: "Post cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // TODO: Implement post creation when posts table is added
-    toast({
-      title: "Success",
-      description: "Post created successfully!",
-    });
-    setPostContent("");
-  };
-
   const tabs = [
     { id: "popular", label: "Popular" },
     { id: "recent", label: "Recent" },
@@ -113,7 +97,11 @@ const Index = () => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
+              className={`flex-1 px-4 py-2 text-sm font-medium border-b-2 ${
+                activeTab === tab.id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
@@ -124,116 +112,19 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="pt-28 px-4 pb-20 max-w-2xl mx-auto">
-        {/* User Profile Info */}
-        {profile && (
-          <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
-                <User className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-semibold">{profile.username}</h2>
-                <p className="text-sm text-gray-500">{profile.email}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Post Input */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200" />
-            <div className="flex-1">
-              <Input
-                placeholder="Add to the Conversation..."
-                value={postContent}
-                onChange={(e) => setPostContent(e.target.value)}
-                className="mb-3"
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    Upload
-                  </Button>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isAnonymous}
-                      onChange={(e) => setIsAnonymous(e.target.checked)}
-                      className="rounded"
-                    />
-                    Anonymous
-                  </label>
-                </div>
-                <Button onClick={handlePost}>Post</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Prompt */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold">Daily Prompt #36</h2>
-            <Button variant="outline" size="sm">
-              Minimize
-            </Button>
-          </div>
-          <p className="text-gray-600 mb-3">
-            What's your favorite way to spend time outdoors?
-          </p>
-          <Button variant="outline">Participate</Button>
-        </div>
-
-        {/* Feed will be implemented here */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-gray-500 mb-4">No posts yet</p>
-          </div>
-        </div>
+        {profile && <ProfileCard profile={profile} />}
+        <CreatePost />
+        <DailyPrompt />
+        <PostFeed filter={activeTab as "popular" | "recent" | "following" | "commented"} />
       </main>
 
-      {/* Navigation Menu (Left Slide-out) */}
+      {/* Navigation Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="fixed inset-y-0 left-0 w-64 bg-white animate-slide-in-left">
-            <div className="p-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMenuOpen(false)}
-                className="absolute right-2 top-2"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-              <div className="space-y-4 mt-10">
-                <button className="nav-item">
-                  <User className="h-5 w-5" />
-                  {profile?.username || 'Profile'}
-                </button>
-                <button className="nav-item">
-                  <Bell className="h-5 w-5" />
-                  Notifications
-                </button>
-                <button className="nav-item">
-                  <Search className="h-5 w-5" />
-                  Search
-                </button>
-                <button className="nav-item">
-                  <Settings className="h-5 w-5" />
-                  Settings
-                </button>
-                <Button 
-                  onClick={handleLogout}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Navigation
+          profile={profile}
+          onClose={() => setIsMenuOpen(false)}
+          onLogout={handleLogout}
+        />
       )}
     </div>
   );
