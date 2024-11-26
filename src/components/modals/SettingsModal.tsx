@@ -30,7 +30,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     },
   });
 
-  const updateSetting = async (field: string, value: boolean) => {
+  const updateSetting = async (field: string, value: boolean | string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 

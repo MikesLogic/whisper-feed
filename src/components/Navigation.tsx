@@ -1,6 +1,6 @@
 import { Menu, User, Bell, Search, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
 import { SettingsModal } from "./modals/SettingsModal";
 import { SearchModal } from "./modals/SearchModal";
@@ -18,7 +18,6 @@ export const Navigation = ({ profile, onClose, onLogout }: NavigationProps) => {
   const [activeModal, setActiveModal] = useState<'profile' | 'settings' | 'search' | 'notifications' | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-  // Listen for the beforeinstallprompt event
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
