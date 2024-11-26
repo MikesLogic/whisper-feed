@@ -32,7 +32,6 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     const handleLocationChange = () => {
       if (!location.search.includes('modal=')) {
         setActiveModal(null);
-        onClose();
       }
     };
 
@@ -42,7 +41,7 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
     };
-  }, [location, onClose]);
+  }, [location]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -79,11 +78,19 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     setActiveModal(null);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-      <div className="fixed inset-y-0 left-0 w-64 bg-white animate-slide-in-left">
+    <div 
+      className={`fixed inset-0 bg-black transition-opacity duration-300 ${
+        isOpen ? 'bg-opacity-50 pointer-events-auto' : 'bg-opacity-0 pointer-events-none'
+      } z-50`}
+      onClick={onClose}
+    >
+      <div 
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        onClick={e => e.stopPropagation()}
+      >
         <div className="p-4">
           <Button
             variant="ghost"
