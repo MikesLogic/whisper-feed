@@ -41,31 +41,46 @@ export const PostCard = ({ post }: PostCardProps) => {
         return;
       }
 
-      const { error } = await supabase
+      // First check if the user has already liked this post
+      const { data: existingLike } = await supabase
         .from('likes')
-        .insert({
-          post_id: post.id,
-          user_id: user.id,
-        });
+        .select()
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) {
-        if (error.code === '23505') { // Unique violation
-          // Unlike the post
-          await supabase
-            .from('likes')
-            .delete()
-            .match({ post_id: post.id, user_id: user.id });
-        } else {
-          throw error;
-        }
+      if (existingLike) {
+        // Unlike the post
+        const { error: deleteError } = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_id', user.id);
+
+        if (deleteError) throw deleteError;
+
+        toast({
+          title: "Success",
+          description: "Post unliked",
+        });
+      } else {
+        // Like the post
+        const { error: insertError } = await supabase
+          .from('likes')
+          .insert({
+            post_id: post.id,
+            user_id: user.id,
+          });
+
+        if (insertError) throw insertError;
+
+        toast({
+          title: "Success",
+          description: "Post liked",
+        });
       }
 
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
-      toast({
-        title: "Success",
-        description: error ? "Post unliked" : "Post liked",
-      });
     } catch (error) {
       toast({
         title: "Error",
