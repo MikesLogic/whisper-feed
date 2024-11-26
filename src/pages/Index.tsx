@@ -70,7 +70,7 @@ const Index = () => {
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <h1 className="text-xl font-semibold text-primary">Anomo World</h1>
+            <h1 className="text-xl font-semibold text-primary">Anomours</h1>
             <Button variant="ghost" size="icon">
               <Bell className="h-6 w-6" />
             </Button>
