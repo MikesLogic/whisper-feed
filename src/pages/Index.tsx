@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, Bell, Settings, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Profile {
+  username: string;
+  email: string;
+  created_at: string;
+}
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
@@ -10,15 +17,55 @@ const Index = () => {
   const { toast } = useToast();
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [postContent, setPostContent] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  const tabs = [
-    { id: "popular", label: "Popular" },
-    { id: "recent", label: "Recent" },
-    { id: "following", label: "Following" },
-    { id: "commented", label: "Commented" },
-  ];
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
-  const handlePost = () => {
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, email, created_at')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Success",
+      description: "Signed out successfully",
+    });
+  };
+
+  const handlePost = async () => {
     if (!postContent.trim()) {
       toast({
         title: "Error",
@@ -28,13 +75,20 @@ const Index = () => {
       return;
     }
     
-    // TODO: Implement post creation
+    // TODO: Implement post creation when posts table is added
     toast({
       title: "Success",
       description: "Post created successfully!",
     });
     setPostContent("");
   };
+
+  const tabs = [
+    { id: "popular", label: "Popular" },
+    { id: "recent", label: "Recent" },
+    { id: "following", label: "Following" },
+    { id: "commented", label: "Commented" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,6 +124,21 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="pt-28 px-4 pb-20 max-w-2xl mx-auto">
+        {/* User Profile Info */}
+        {profile && (
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
+                <User className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-semibold">{profile.username}</h2>
+                <p className="text-sm text-gray-500">{profile.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Post Input */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex items-start gap-3">
@@ -140,7 +209,7 @@ const Index = () => {
               <div className="space-y-4 mt-10">
                 <button className="nav-item">
                   <User className="h-5 w-5" />
-                  Profile
+                  {profile?.username || 'Profile'}
                 </button>
                 <button className="nav-item">
                   <Bell className="h-5 w-5" />
@@ -154,6 +223,13 @@ const Index = () => {
                   <Settings className="h-5 w-5" />
                   Settings
                 </button>
+                <Button 
+                  onClick={handleLogout}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
           </div>
