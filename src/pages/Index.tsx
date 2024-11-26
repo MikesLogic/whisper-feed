@@ -1,56 +1,17 @@
 import { useState, useEffect } from "react";
-import { Menu, Bell, Settings, Search, User } from "lucide-react";
+import { Menu, Bell, Settings, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePost } from "@/components/post/CreatePost";
 import { PostFeed } from "@/components/post/PostFeed";
 import { DailyPrompt } from "@/components/DailyPrompt";
-import { ProfileCard } from "@/components/ProfileCard";
 import { Navigation } from "@/components/Navigation";
-
-interface Profile {
-  id: string;
-  username: string;
-  email: string;
-  created_at: string;
-}
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, email, created_at')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -113,7 +74,6 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="pt-28 px-4 pb-20 max-w-2xl mx-auto">
-        {profile && <ProfileCard profile={profile} />}
         <CreatePost />
         <DailyPrompt />
         <PostFeed filter={activeTab as "popular" | "recent" | "following" | "commented"} />
@@ -122,7 +82,6 @@ const Index = () => {
       {/* Navigation Menu */}
       {isMenuOpen && (
         <Navigation
-          profile={profile}
           onClose={() => setIsMenuOpen(false)}
           onLogout={handleLogout}
         />
