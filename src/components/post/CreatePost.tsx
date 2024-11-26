@@ -1,14 +1,48 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 
 export const CreatePost = () => {
   const [postContent, setPostContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('https://tuaavguqfgmeazqwgtcf.functions.supabase.co/upload-post-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const { publicUrl } = await response.json();
+      return publicUrl;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
 
   const handlePost = async () => {
     if (!postContent.trim()) {
@@ -24,12 +58,19 @@ export const CreatePost = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      let mediaUrl = null;
+      if (fileInputRef.current?.files?.length) {
+        mediaUrl = await handleFileUpload(fileInputRef.current.files[0]);
+        if (!mediaUrl) return;
+      }
+
       const { error } = await supabase
         .from('posts')
         .insert({
           content: postContent,
           author_id: user.id,
           is_anonymous: isAnonymous,
+          media_url: mediaUrl,
         });
 
       if (error) throw error;
@@ -40,6 +81,7 @@ export const CreatePost = () => {
       });
       setPostContent("");
       setIsAnonymous(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       toast({
         title: "Error",
@@ -64,7 +106,26 @@ export const CreatePost = () => {
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,video/*"
+                onChange={(e) => {
+                  if (e.target.files?.length) {
+                    setUploadProgress(0);
+                  }
+                }}
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
                 Upload
               </Button>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -77,8 +138,13 @@ export const CreatePost = () => {
                 Anonymous
               </label>
             </div>
-            <Button onClick={handlePost}>Post</Button>
+            <Button onClick={handlePost} disabled={isUploading}>Post</Button>
           </div>
+          {uploadProgress > 0 && (
+            <div className="mt-2">
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
         </div>
       </div>
     </div>

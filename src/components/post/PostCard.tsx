@@ -15,6 +15,7 @@ interface PostCardProps {
     created_at: string;
     is_anonymous: boolean;
     author_id: string;
+    media_url: string | null;
     profiles: {
       username: string;
     };
@@ -108,6 +109,23 @@ export const PostCard = ({ post }: PostCardProps) => {
             </span>
           </div>
           <p className="mt-2 text-gray-700">{post.content}</p>
+          {post.media_url && (
+            <div className="mt-3">
+              {post.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                <img 
+                  src={post.media_url} 
+                  alt="Post attachment" 
+                  className="rounded-lg max-h-96 w-auto"
+                />
+              ) : post.media_url.match(/\.(mp4|webm)$/i) ? (
+                <video 
+                  src={post.media_url} 
+                  controls 
+                  className="rounded-lg max-h-96 w-auto"
+                />
+              ) : null}
+            </div>
+          )}
           <div className="flex items-center gap-4 mt-4">
             <Button 
               variant="ghost" 

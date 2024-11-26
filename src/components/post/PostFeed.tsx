@@ -29,29 +29,27 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
         `)
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
-      if (filter === "following") {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { data: [], nextPage: null };
+      switch (filter) {
+        case "popular":
+          query = query.order('likes(count)', { ascending: false });
+          break;
+        case "following":
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return { data: [], nextPage: null };
 
-        const { data: followingIds } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', user.id);
+          const { data: followingIds } = await supabase
+            .from('follows')
+            .select('following_id')
+            .eq('follower_id', user.id);
 
-        if (!followingIds?.length) return { data: [], nextPage: null };
-
-        query = query.in('author_id', followingIds.map(f => f.following_id));
-      } else {
-        switch (filter) {
-          case "popular":
-            query = query.order('likes(count)', { ascending: false });
-            break;
-          case "commented":
-            query = query.order('comments(count)', { ascending: false });
-            break;
-          default:
-            query = query.order('created_at', { ascending: false });
-        }
+          if (!followingIds?.length) return { data: [], nextPage: null };
+          query = query.in('author_id', followingIds.map(f => f.following_id));
+          break;
+        case "commented":
+          query = query.order('comments(count)', { ascending: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
       }
 
       const { data: posts, error } = await query;
@@ -66,26 +64,6 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
     initialPageParam: 0,
   });
 
-  // Set up real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('public:posts')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'posts',
-      }, () => {
-        // Invalidate and refetch posts when changes occur
-        window.location.reload();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // Trigger next page fetch when the last element is in view
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -110,14 +88,12 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
         </div>
       ))}
       
-      {/* Loading indicator for next page */}
       <div ref={ref} className="h-8 flex justify-center">
         {isFetchingNextPage && (
           <Loader2 className="h-6 w-6 animate-spin" />
         )}
       </div>
 
-      {/* No posts message */}
       {data?.pages[0].data.length === 0 && (
         <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
           No posts yet
