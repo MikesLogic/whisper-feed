@@ -61,13 +61,6 @@ const Landing = () => {
           }}
           providers={[]}
           redirectTo={window.location.origin}
-          onError={(error) => {
-            toast({
-              title: "Error",
-              description: error.message || "An error occurred during authentication",
-              variant: "destructive",
-            });
-          }}
         />
       </div>
     </div>
