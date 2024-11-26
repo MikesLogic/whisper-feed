@@ -68,18 +68,15 @@ const Landing = () => {
           }}
           providers={[]}
           redirectTo={window.location.origin}
-          view="sign_up"
-          showLinks={true}
-          magicLink={false}
-          theme="default"
-          additionalData={{
-            username: {
+          options={{
+            emailRedirectTo: window.location.origin,
+            additionalSignUpFields: [{
               key: 'username',
-              name: 'username',
+              name: 'Username',
               type: 'text',
               required: true,
-              placeholder: 'Choose a username',
-            },
+              placeholder: 'Choose a username'
+            }]
           }}
           localization={{
             variables: {
