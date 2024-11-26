@@ -30,6 +30,13 @@ const Landing = () => {
       }
     });
 
+    // Check if user is already signed in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
@@ -70,6 +77,8 @@ const Landing = () => {
                 loading_button_label: 'Signing in...',
                 social_provider_text: 'Sign in with {{provider}}',
                 link_text: "Don't have an account? Sign up",
+                email_input_placeholder: 'Your email address',
+                password_input_placeholder: 'Your password',
               },
               sign_up: {
                 email_label: 'Email',
@@ -78,6 +87,8 @@ const Landing = () => {
                 loading_button_label: 'Signing up...',
                 social_provider_text: 'Sign up with {{provider}}',
                 link_text: 'Already have an account? Sign in',
+                email_input_placeholder: 'Your email address',
+                password_input_placeholder: 'Choose a strong password',
               },
             },
           }}
