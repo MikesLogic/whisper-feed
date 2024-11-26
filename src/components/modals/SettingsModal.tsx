@@ -1,0 +1,90 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface SettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: settings } = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      return data;
+    },
+  });
+
+  const updateSetting = async (field: string, value: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('settings')
+      .update({ [field]: value })
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update settings",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Enable Notifications</label>
+            <Switch
+              checked={settings?.notifications_enabled || false}
+              onCheckedChange={(checked) => updateSetting('notifications_enabled', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Email Notifications</label>
+            <Switch
+              checked={settings?.email_notifications || false}
+              onCheckedChange={(checked) => updateSetting('email_notifications', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Theme</label>
+            <select
+              className="border rounded p-1"
+              value={settings?.theme || 'light'}
+              onChange={(e) => updateSetting('theme', e.target.value)}
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
