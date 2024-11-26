@@ -11,9 +11,17 @@ interface CommentSectionProps {
   postId: string;
   isAnonymousPost: boolean;
   originalPosterId: string;
+  originalPost: {
+    content: string;
+    profiles: {
+      username: string;
+    };
+    created_at: string;
+    is_anonymous: boolean;
+  };
 }
 
-export const CommentSection = ({ postId, isAnonymousPost, originalPosterId }: CommentSectionProps) => {
+export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, originalPost }: CommentSectionProps) => {
   const [newComment, setNewComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const { toast } = useToast();
@@ -60,7 +68,6 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId }: Co
     try {
       if (!currentUser) throw new Error("Not authenticated");
 
-      // Only allow anonymous comments if the post is anonymous and the commenter is the original poster
       const finalIsAnonymous = canPostAnonymously ? isAnonymous : false;
 
       const { error } = await supabase
@@ -116,31 +123,29 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId }: Co
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-lg">Comments</h3>
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <Input
-          placeholder="Write a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-        />
-        <div className="flex items-center justify-between">
-          {canPostAnonymously && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="rounded"
-              />
-              Anonymous
-            </label>
-          )}
-          <Button type="submit">Comment</Button>
+    <div className="flex flex-col h-[calc(100vh-2rem)]">
+      {/* Original Post */}
+      <div className="p-4 border-b">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+            <User className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">
+                {originalPost.is_anonymous ? "Anonymous" : originalPost.profiles.username}
+              </h3>
+              <span className="text-sm text-gray-500">
+                {formatDistanceToNow(new Date(originalPost.created_at), { addSuffix: true })}
+              </span>
+            </div>
+            <p className="mt-2 text-gray-700">{originalPost.content}</p>
+          </div>
         </div>
-      </form>
+      </div>
 
-      <div className="space-y-3">
+      {/* Comments List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoading ? (
           <div className="text-center text-gray-500">Loading comments...</div>
         ) : comments?.length === 0 ? (
@@ -177,6 +182,31 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId }: Co
             </div>
           ))
         )}
+      </div>
+
+      {/* Comment Input Form - Fixed at bottom */}
+      <div className="border-t p-4 bg-white">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Input
+            placeholder="Write a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          <div className="flex items-center justify-between">
+            {canPostAnonymously && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="rounded"
+                />
+                Anonymous
+              </label>
+            )}
+            <Button type="submit">Comment</Button>
+          </div>
+        </form>
       </div>
     </div>
   );

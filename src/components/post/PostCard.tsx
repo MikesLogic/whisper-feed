@@ -115,8 +115,18 @@ export const PostCard = ({ post }: PostCardProps) => {
                   {post.comments[0]?.count || 0}
                 </Button>
               </SheetTrigger>
-              <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-                <CommentSection postId={post.id} isAnonymousPost={post.is_anonymous} originalPosterId={post.author_id} />
+              <SheetContent className="w-[400px] sm:w-[540px] p-0">
+                <CommentSection 
+                  postId={post.id} 
+                  isAnonymousPost={post.is_anonymous} 
+                  originalPosterId={post.author_id}
+                  originalPost={{
+                    content: post.content,
+                    profiles: post.profiles,
+                    created_at: post.created_at,
+                    is_anonymous: post.is_anonymous,
+                  }}
+                />
               </SheetContent>
             </Sheet>
           </div>
