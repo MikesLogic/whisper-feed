@@ -16,18 +16,29 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
           comments:comments(count)
         `);
 
-      switch (filter) {
-        case "popular":
-          query = query.order('likes(count)', { ascending: false });
-          break;
-        case "commented":
-          query = query.order('comments(count)', { ascending: false });
-          break;
-        case "following":
-          // TODO: Implement following filter
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
+      if (filter === "following") {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data: followingIds } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (!followingIds?.length) return [];
+
+        query = query.in('author_id', followingIds.map(f => f.following_id));
+      } else {
+        switch (filter) {
+          case "popular":
+            query = query.order('likes(count)', { ascending: false });
+            break;
+          case "commented":
+            query = query.order('comments(count)', { ascending: false });
+            break;
+          default:
+            query = query.order('created_at', { ascending: false });
+        }
       }
 
       const { data, error } = await query;

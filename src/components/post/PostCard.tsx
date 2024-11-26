@@ -5,6 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { CommentSection } from "./CommentSection";
 
 interface PostCardProps {
   post: {
@@ -22,6 +23,7 @@ interface PostCardProps {
 
 export const PostCard = ({ post }: PostCardProps) => {
   const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,11 +104,17 @@ export const PostCard = ({ post }: PostCardProps) => {
               <Heart className="w-4 h-4" />
               {post.likes[0]?.count || 0}
             </Button>
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowComments(!showComments)}
+            >
               <MessageSquare className="w-4 h-4" />
               {post.comments[0]?.count || 0}
             </Button>
           </div>
+          {showComments && <CommentSection postId={post.id} />}
         </div>
       </div>
     </div>
