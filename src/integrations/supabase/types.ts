@@ -184,6 +184,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          alias: string | null
           created_at: string
           email: string
           id: string
@@ -191,6 +192,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          alias?: string | null
           created_at?: string
           email: string
           id: string
@@ -198,6 +200,7 @@ export type Database = {
           username: string
         }
         Update: {
+          alias?: string | null
           created_at?: string
           email?: string
           id?: string

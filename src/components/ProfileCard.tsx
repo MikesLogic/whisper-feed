@@ -2,16 +2,32 @@ import { User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FollowButton } from "./FollowButton";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { useState } from "react";
+import { useToast } from "./ui/use-toast";
 
 interface ProfileCardProps {
   profile: {
     id: string;
     username: string;
     email: string;
+    alias?: string | null;
   };
 }
 
 export const ProfileCard = ({ profile }: ProfileCardProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [alias, setAlias] = useState(profile.alias || '');
+  const { toast } = useToast();
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["profileStats", profile.id],
     queryFn: async () => {
@@ -55,6 +71,30 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
     },
   });
 
+  const handleSaveAlias = async () => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ alias })
+      .eq('id', profile.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update alias",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Alias updated successfully",
+    });
+    setIsEditing(false);
+  };
+
+  const isOwnProfile = currentUser?.id === profile.id;
+
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
       <div className="flex items-center gap-4">
@@ -65,9 +105,37 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold">{profile.username}</h2>
-              <p className="text-sm text-gray-500">{profile.email}</p>
+              {isEditing && isOwnProfile ? (
+                <div className="flex gap-2 items-center mt-1">
+                  <Input
+                    value={alias}
+                    onChange={(e) => setAlias(e.target.value)}
+                    placeholder="Set your alias"
+                    className="h-8"
+                  />
+                  <Button size="sm" onClick={handleSaveAlias}>Save</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500">{profile.email}</p>
+                  {profile.alias && <p className="text-sm text-gray-600">Known as: {profile.alias}</p>}
+                  {isOwnProfile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="mt-1"
+                    >
+                      {profile.alias ? 'Edit alias' : 'Add alias'}
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
-            <FollowButton userId={profile.id} isFollowing={isFollowing || false} />
+            {!isOwnProfile && (
+              <FollowButton userId={profile.id} isFollowing={isFollowing || false} />
+            )}
           </div>
           <div className="flex gap-4 mt-2 text-sm text-gray-600">
             <span>{stats?.followers || 0} followers</span>
