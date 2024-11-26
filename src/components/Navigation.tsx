@@ -13,9 +13,10 @@ interface NavigationProps {
   } | null;
   onClose: () => void;
   onLogout: () => void;
+  isOpen: boolean;
 }
 
-export const Navigation = ({ profile, onClose, onLogout }: NavigationProps) => {
+export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationProps) => {
   const [activeModal, setActiveModal] = useState<'profile' | 'settings' | 'search' | 'notifications' | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const navigate = useNavigate();
@@ -23,13 +24,11 @@ export const Navigation = ({ profile, onClose, onLogout }: NavigationProps) => {
 
   useEffect(() => {
     if (activeModal) {
-      // Push a new entry to the history stack when opening a modal
       navigate(`${location.pathname}?modal=${activeModal}`, { replace: false });
     }
   }, [activeModal, navigate, location.pathname]);
 
   useEffect(() => {
-    // Listen for popstate (back/forward button) events
     const handleLocationChange = () => {
       if (!location.search.includes('modal=')) {
         setActiveModal(null);
@@ -74,12 +73,13 @@ export const Navigation = ({ profile, onClose, onLogout }: NavigationProps) => {
   };
 
   const handleModalClose = () => {
-    // When closing a modal, go back in history if we're on a modal route
     if (location.search.includes('modal=')) {
       navigate(-1);
     }
     setActiveModal(null);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50">

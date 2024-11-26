@@ -102,13 +102,12 @@ const Index = () => {
         </main>
 
         {/* Navigation Menu */}
-        {isMenuOpen && (
-          <Navigation
-            profile={profile}
-            onClose={() => setIsMenuOpen(false)}
-            onLogout={handleLogout}
-          />
-        )}
+        <Navigation
+          profile={profile}
+          onClose={() => setIsMenuOpen(false)}
+          onLogout={handleLogout}
+          isOpen={isMenuOpen}
+        />
       </div>
     </TooltipProvider>
   );
