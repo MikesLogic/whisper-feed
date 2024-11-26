@@ -68,16 +68,6 @@ const Landing = () => {
           }}
           providers={[]}
           redirectTo={window.location.origin}
-          options={{
-            emailRedirectTo: window.location.origin,
-            additionalSignUpFields: [{
-              key: 'username',
-              name: 'Username',
-              type: 'text',
-              required: true,
-              placeholder: 'Choose a username'
-            }]
-          }}
           localization={{
             variables: {
               sign_in: {
