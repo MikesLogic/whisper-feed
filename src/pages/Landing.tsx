@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -68,6 +68,18 @@ const Landing = () => {
           }}
           providers={[]}
           redirectTo={window.location.origin}
+          options={{
+            emailRedirectTo: window.location.origin,
+            additionalSignUpFields: [
+              {
+                key: 'username',
+                name: 'username',
+                type: 'text',
+                required: true,
+                placeholder: 'Choose a username',
+              },
+            ],
+          }}
           localization={{
             variables: {
               sign_in: {
