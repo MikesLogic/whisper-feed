@@ -10,6 +10,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { Navigation } from "@/components/Navigation";
 
 interface Profile {
+  id: string;
   username: string;
   email: string;
   created_at: string;
@@ -32,7 +33,7 @@ const Index = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, email, created_at')
+        .select('id, username, email, created_at')
         .eq('id', user.id)
         .single();
 
