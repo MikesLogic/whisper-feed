@@ -17,6 +17,21 @@ const Landing = () => {
           description: "You have successfully signed in.",
         });
         navigate("/");
+      } else if (event === "SIGNED_OUT") {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out.",
+        });
+      } else if (event === "USER_DELETED") {
+        toast({
+          title: "Account deleted",
+          description: "Your account has been deleted.",
+        });
+      } else if (event === "USER_UPDATED") {
+        toast({
+          title: "Account updated",
+          description: "Your account has been updated.",
+        });
       }
     });
 
@@ -36,14 +51,27 @@ const Landing = () => {
                 colors: {
                   brand: '#00BFB3',
                   brandAccent: '#00A89D',
-                }
+                },
+                borderRadii: {
+                  borderRadiusButton: '0.5rem',
+                  inputBorderRadius: '0.5rem',
+                },
               }
+            },
+            className: {
+              container: 'auth-container',
+              button: 'auth-button',
+              input: 'auth-input',
             }
           }}
           providers={[]}
           redirectTo={window.location.origin}
-          additionalData={{
-            username: true
+          onError={(error) => {
+            toast({
+              title: "Error",
+              description: error.message || "An error occurred during authentication",
+              variant: "destructive",
+            });
           }}
         />
       </div>
