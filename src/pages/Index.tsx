@@ -66,7 +66,7 @@ const Index = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 bg-primary z-50">
+        <header className="fixed top-0 left-0 right-0 bg-primary z-50 shadow-md">
           <div className="flex items-center justify-between px-4 h-14">
             <div className="relative">
               <Button
