@@ -12,6 +12,7 @@ export const CreatePost = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isPosting, setIsPosting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,6 +57,8 @@ export const CreatePost = () => {
       return;
     }
 
+    setIsPosting(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -63,7 +66,10 @@ export const CreatePost = () => {
       let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         mediaUrl = await handleFileUpload(fileInputRef.current.files[0]);
-        if (!mediaUrl) return;
+        if (!mediaUrl) {
+          setIsPosting(false);
+          return;
+        }
       }
 
       const { error } = await supabase
@@ -81,11 +87,12 @@ export const CreatePost = () => {
         title: "Success",
         description: "Post created successfully!",
       });
+      
       setPostContent("");
       setIsAnonymous(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       
-      // Invalidate and refetch posts
+      // Invalidate and refetch posts immediately
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
     } catch (error) {
       toast({
@@ -93,6 +100,8 @@ export const CreatePost = () => {
         description: "Failed to create post",
         variant: "destructive",
       });
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -126,7 +135,7 @@ export const CreatePost = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+                disabled={isUploading || isPosting}
               >
                 {isUploading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -143,7 +152,15 @@ export const CreatePost = () => {
                 Anonymous
               </label>
             </div>
-            <Button onClick={handlePost} disabled={isUploading}>Post</Button>
+            <Button 
+              onClick={handlePost} 
+              disabled={isUploading || isPosting}
+            >
+              {isPosting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              Post
+            </Button>
           </div>
           {uploadProgress > 0 && (
             <div className="mt-2">

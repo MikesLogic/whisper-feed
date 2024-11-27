@@ -23,7 +23,10 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
         .from('posts')
         .select(`
           *,
-          profiles!posts_author_id_fkey (username),
+          profiles!posts_author_id_fkey (
+            username,
+            avatar_url
+          ),
           likes:likes(count),
           comments:comments(count)
         `)
@@ -62,6 +65,8 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
+    staleTime: 1000, // Consider data stale after 1 second
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   useEffect(() => {
