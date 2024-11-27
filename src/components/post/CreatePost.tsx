@@ -1,13 +1,12 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { User, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
-import { Toggle } from "@/components/ui/toggle";
 import { useQuery } from "@tanstack/react-query";
+import { PostInput } from "./PostInput";
+import { UploadProgress } from "./UploadProgress";
 
 export const CreatePost = () => {
   const [postContent, setPostContent] = useState("");
@@ -16,7 +15,6 @@ export const CreatePost = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPosting, setIsPosting] = useState(false);
   const [useDailyPrompt, setUseDailyPrompt] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -81,15 +79,6 @@ export const CreatePost = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      let mediaUrl = null;
-      if (fileInputRef.current?.files?.length) {
-        mediaUrl = await handleFileUpload(fileInputRef.current.files[0]);
-        if (!mediaUrl) {
-          setIsPosting(false);
-          return;
-        }
-      }
-
       const finalContent = useDailyPrompt && dailyPrompt 
         ? `${postContent}\n\n#DailyPrompt${dailyPrompt.id}`
         : postContent;
@@ -100,7 +89,6 @@ export const CreatePost = () => {
           content: finalContent,
           author_id: user.id,
           is_anonymous: isAnonymous,
-          media_url: mediaUrl,
         });
 
       if (error) throw error;
@@ -108,9 +96,13 @@ export const CreatePost = () => {
       setPostContent("");
       setIsAnonymous(false);
       setUseDailyPrompt(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
       
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      
+      toast({
+        title: "Success",
+        description: "Post created successfully",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -122,90 +114,37 @@ export const CreatePost = () => {
     }
   };
 
-  const handleTogglePrompt = () => {
-    setUseDailyPrompt(!useDailyPrompt);
-    if (!useDailyPrompt && dailyPrompt) {
-      setPostContent(dailyPrompt.content);
-    } else {
-      setPostContent("");
-    }
-  };
-
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-          <User className="w-6 h-6" />
+    <div className="bg-white rounded-lg shadow p-4 sticky top-[7.5rem] z-40">
+      <PostInput
+        postContent={postContent}
+        isAnonymous={isAnonymous}
+        useDailyPrompt={useDailyPrompt}
+        dailyPrompt={dailyPrompt}
+        onContentChange={setPostContent}
+        onAnonymousChange={setIsAnonymous}
+        onPromptToggle={() => {
+          setUseDailyPrompt(!useDailyPrompt);
+          if (!useDailyPrompt && dailyPrompt) {
+            setPostContent(dailyPrompt.content);
+          } else {
+            setPostContent("");
+          }
+        }}
+        onFileSelect={handleFileUpload}
+      />
+      <UploadProgress progress={uploadProgress} />
+      {(postContent.length > 0 || isPosting) && (
+        <div className="mt-4 flex justify-end">
+          <Button 
+            onClick={handlePost} 
+            disabled={isUploading || isPosting}
+          >
+            {isPosting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Post
+          </Button>
         </div>
-        <div className="flex-1">
-          <div className="mb-3">
-            <Textarea
-              placeholder="Add to the Conversation..."
-              value={postContent}
-              onChange={(e) => setPostContent(e.target.value)}
-              className="min-h-[100px] resize-y"
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*,video/*"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    setUploadProgress(0);
-                  }
-                }}
-              />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isPosting}
-              >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Upload
-              </Button>
-              {dailyPrompt && (
-                <Toggle
-                  pressed={useDailyPrompt}
-                  onPressedChange={handleTogglePrompt}
-                  className="px-3"
-                >
-                  Daily Prompt
-                </Toggle>
-              )}
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="rounded"
-                />
-                Anonymous
-              </label>
-            </div>
-            <Button 
-              onClick={handlePost} 
-              disabled={isUploading || isPosting}
-            >
-              {isPosting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Post
-            </Button>
-          </div>
-          {uploadProgress > 0 && (
-            <div className="mt-2">
-              <Progress value={uploadProgress} className="h-2" />
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
