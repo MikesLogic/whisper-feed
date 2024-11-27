@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CommentSection } from "./CommentSection";
+import { LikesModal } from "../modals/LikesModal";
 
 interface PostActionsProps {
   post: {
@@ -22,18 +24,28 @@ interface PostActionsProps {
 }
 
 export const PostActions = ({ post, onLike, isLiking }: PostActionsProps) => {
+  const [showLikes, setShowLikes] = useState(false);
+
   return (
     <div className="flex items-center gap-4 mt-4">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="gap-2"
-        onClick={onLike}
-        disabled={isLiking}
-      >
-        <Heart className="w-4 h-4" />
-        {post.likes[0]?.count || 0}
-      </Button>
+      <div className="flex items-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="gap-2"
+          onClick={onLike}
+          disabled={isLiking}
+        >
+          <Heart className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowLikes(true)}
+        >
+          {post.likes[0]?.count || 0}
+        </Button>
+      </div>
       <Sheet>
         <SheetTrigger asChild>
           <Button 
@@ -59,6 +71,11 @@ export const PostActions = ({ post, onLike, isLiking }: PostActionsProps) => {
           />
         </SheetContent>
       </Sheet>
+      <LikesModal
+        postId={post.id}
+        isOpen={showLikes}
+        onClose={() => setShowLikes(false)}
+      />
     </div>
   );
 };
