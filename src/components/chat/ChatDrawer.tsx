@@ -44,9 +44,16 @@ export const ChatDrawer = ({ isOpen, onClose }: ChatDrawerProps) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+      <SheetContent 
+        side="right" 
+        className="w-full p-0 sm:w-[400px] md:w-[500px] lg:w-[600px]"
+      >
         <div className="flex h-full">
-          <div className={`w-full ${selectedConversation ? 'hidden sm:block sm:w-1/3' : 'w-full'} border-r`}>
+          <div 
+            className={`w-full transition-all duration-300 ${
+              selectedConversation ? 'hidden sm:block sm:w-2/5' : 'w-full'
+            } border-r`}
+          >
             <ConversationList
               conversations={conversations || []}
               currentUserId={currentUser?.id}
@@ -55,7 +62,7 @@ export const ChatDrawer = ({ isOpen, onClose }: ChatDrawerProps) => {
             />
           </div>
           {selectedConversation && (
-            <div className="w-full sm:w-2/3">
+            <div className="w-full sm:w-3/5">
               <ChatMessages
                 conversationId={selectedConversation}
                 onBack={() => setSelectedConversation(null)}

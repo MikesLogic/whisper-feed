@@ -27,6 +27,21 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  /* Mobile-first responsive adjustments */
+  @media (max-width: 640px) {
+    body {
+      @apply text-sm;
+    }
+
+    input, textarea, select {
+      @apply text-base; /* Prevents zoom on focus in iOS */
+    }
+
+    button {
+      @apply min-h-[44px]; /* Better touch targets */
+    }
+  }
 }
 
 @layer components {
@@ -45,5 +60,16 @@
   .tab-item.active::after {
     content: '';
     @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .nav-item {
+      @apply px-3 py-2;
+    }
+    
+    .tab-item {
+      @apply px-2 py-1.5;
+    }
   }
 }
