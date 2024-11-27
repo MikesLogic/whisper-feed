@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 
@@ -29,7 +30,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ChatDrawer />
+    </>
+  );
 };
 
 const App = () => (
