@@ -132,19 +132,10 @@ export const CreatePost = () => {
           }
         }}
         onFileSelect={handleFileUpload}
+        onPost={handlePost}
+        isPosting={isPosting}
       />
       <UploadProgress progress={uploadProgress} />
-      {(postContent.length > 0 || isPosting) && (
-        <div className="mt-4 flex justify-end">
-          <Button 
-            onClick={handlePost} 
-            disabled={isUploading || isPosting}
-          >
-            {isPosting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Post
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
