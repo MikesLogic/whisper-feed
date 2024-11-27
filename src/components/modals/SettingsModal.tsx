@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BlockedMutedUsers } from "@/components/settings/BlockedMutedUsers";
+import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/utils/pushNotifications";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -69,6 +70,31 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     queryClient.invalidateQueries({ queryKey: ["userSettings"] });
   };
 
+  const handlePushNotificationToggle = async (checked: boolean) => {
+    try {
+      if (checked) {
+        const success = await subscribeToPushNotifications();
+        if (!success) throw new Error('Failed to subscribe to push notifications');
+      } else {
+        const success = await unsubscribeFromPushNotifications();
+        if (!success) throw new Error('Failed to unsubscribe from push notifications');
+      }
+
+      await updateSetting('notifications_enabled', checked);
+      
+      toast({
+        title: "Success",
+        description: checked ? "Push notifications enabled" : "Push notifications disabled",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update push notification settings",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -78,10 +104,10 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         <div className="space-y-6 py-4">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Enable Notifications</label>
+              <label className="text-sm font-medium">Push Notifications</label>
               <Switch
                 checked={settings?.notifications_enabled || false}
-                onCheckedChange={(checked) => updateSetting('notifications_enabled', checked)}
+                onCheckedChange={handlePushNotificationToggle}
               />
             </div>
             <div className="flex items-center justify-between">

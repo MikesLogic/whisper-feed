@@ -328,6 +328,7 @@ export type Database = {
           email_notifications: boolean | null
           id: string
           notifications_enabled: boolean | null
+          push_subscription: Json | null
           theme: string | null
           updated_at: string
           user_id: string
@@ -337,6 +338,7 @@ export type Database = {
           email_notifications?: boolean | null
           id?: string
           notifications_enabled?: boolean | null
+          push_subscription?: Json | null
           theme?: string | null
           updated_at?: string
           user_id: string
@@ -346,6 +348,7 @@ export type Database = {
           email_notifications?: boolean | null
           id?: string
           notifications_enabled?: boolean | null
+          push_subscription?: Json | null
           theme?: string | null
           updated_at?: string
           user_id?: string
