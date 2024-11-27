@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Bell, Settings, Search, MessageSquare } from "lucide-react";
+import { Menu, Bell, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [profile, setProfile] = useState<{ username: string } | null>(null);
   const { toast } = useToast();
 
@@ -78,6 +79,13 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageSquare className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsNotificationsOpen(true)}
               >
                 <Bell className="h-6 w-6" />
@@ -125,7 +133,7 @@ const Index = () => {
         />
 
         {/* Chat Drawer */}
-        <ChatDrawer />
+        <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       </div>
     </TooltipProvider>
   );
