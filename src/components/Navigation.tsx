@@ -6,6 +6,7 @@ import { SettingsModal } from "./modals/SettingsModal";
 import { SearchModal } from "./modals/SearchModal";
 import { NotificationsModal } from "./modals/NotificationsModal";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 interface NavigationProps {
   profile: {
@@ -19,8 +20,34 @@ interface NavigationProps {
 export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationProps) => {
   const [activeModal, setActiveModal] = useState<'profile' | 'settings' | 'search' | 'notifications' | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Detect platform
+    const ua = window.navigator.userAgent.toLowerCase();
+    setIsIOS(/iphone|ipad|ipod/.test(ua));
+    setIsAndroid(/android/.test(ua));
+    
+    // Check if already installed
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+
+    // Listen for beforeinstallprompt (Chrome/Edge/Android Chrome)
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   useEffect(() => {
     if (activeModal) {
@@ -43,27 +70,28 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     };
   }, [location]);
 
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        toast({
+          title: "Success",
+          description: "App installation started",
+        });
+      }
+    } else if (isIOS) {
+      toast({
+        title: "Install on iOS",
+        description: "Tap the share button and select 'Add to Home Screen'",
+      });
+    } else if (isAndroid) {
+      toast({
+        title: "Install on Android",
+        description: "Tap the menu button (⋮) and select 'Add to Home Screen'",
+      });
     }
   };
 
@@ -77,6 +105,8 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     }
     setActiveModal(null);
   };
+
+  const showInstallButton = (deferredPrompt || isIOS || isAndroid) && !isStandalone;
 
   return (
     <div 
@@ -129,7 +159,7 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
               <Settings className="h-5 w-5" />
               Settings
             </button>
-            {deferredPrompt && (
+            {showInstallButton && (
               <Button
                 onClick={handleInstallClick}
                 className="w-full"
