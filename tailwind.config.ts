@@ -29,16 +29,16 @@ export default {
           hover: "#00A89D",
         },
         secondary: {
-          DEFAULT: "#F5F5F5",
-          foreground: "#333333",
+          DEFAULT: "hsl(var(--background))",
+          foreground: "hsl(var(--foreground))",
         },
         accent: {
           DEFAULT: "#2B96CC",
           foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "#F0F0F0",
-          foreground: "#666666",
+          DEFAULT: "hsl(var(--border))",
+          foreground: "hsl(var(--foreground))",
         },
       },
       keyframes: {
