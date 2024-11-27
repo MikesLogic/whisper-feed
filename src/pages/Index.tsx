@@ -75,7 +75,7 @@ const Index = () => {
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <h1 className="text-xl font-semibold text-white">Anomo World</h1>
+            <h1 className="text-xl font-semibold text-white">Anomours</h1>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
