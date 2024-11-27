@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BlockedMutedUsers } from "@/components/settings/BlockedMutedUsers";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // First try to get existing settings
       const { data: existingSettings } = await supabase
         .from('settings')
         .select('*')
@@ -29,7 +29,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
       if (existingSettings) return existingSettings;
 
-      // If no settings exist, create default settings
       const { data: newSettings, error: insertError } = await supabase
         .from('settings')
         .insert([{ user_id: user.id }])
@@ -72,35 +71,41 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 py-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Enable Notifications</label>
-            <Switch
-              checked={settings?.notifications_enabled || false}
-              onCheckedChange={(checked) => updateSetting('notifications_enabled', checked)}
-            />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Enable Notifications</label>
+              <Switch
+                checked={settings?.notifications_enabled || false}
+                onCheckedChange={(checked) => updateSetting('notifications_enabled', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Email Notifications</label>
+              <Switch
+                checked={settings?.email_notifications || false}
+                onCheckedChange={(checked) => updateSetting('email_notifications', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Theme</label>
+              <select
+                className="border rounded p-1"
+                value={settings?.theme || 'light'}
+                onChange={(e) => updateSetting('theme', e.target.value)}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Email Notifications</label>
-            <Switch
-              checked={settings?.email_notifications || false}
-              onCheckedChange={(checked) => updateSetting('email_notifications', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Theme</label>
-            <select
-              className="border rounded p-1"
-              value={settings?.theme || 'light'}
-              onChange={(e) => updateSetting('theme', e.target.value)}
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
+          
+          <div className="border-t pt-6">
+            <BlockedMutedUsers />
           </div>
         </div>
       </DialogContent>

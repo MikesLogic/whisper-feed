@@ -6,6 +6,7 @@ import { User, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { UserActionsMenu } from "./UserActionsMenu";
 
 interface CommentSectionProps {
   postId: string;
@@ -32,6 +33,30 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
+    },
+  });
+
+  const { data: mutedUsers } = useQuery({
+    queryKey: ["mutedUsers"],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const { data } = await supabase
+        .from('muted_users')
+        .select('muted_id')
+        .eq('muter_id', currentUser.id);
+      return data?.map(m => m.muted_id) || [];
+    },
+  });
+
+  const { data: blockedUsers } = useQuery({
+    queryKey: ["blockedUsers"],
+    queryFn: async () => {
+      if (!currentUser) return [];
+      const { data } = await supabase
+        .from('blocked_users')
+        .select('blocked_id')
+        .eq('blocker_id', currentUser.id);
+      return data?.map(b => b.blocked_id) || [];
     },
   });
 
@@ -122,6 +147,9 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
     }
   };
 
+  const isUserBlocked = (userId: string) => blockedUsers?.includes(userId);
+  const isUserMuted = (userId: string) => mutedUsers?.includes(userId);
+
   return (
     <div className="flex flex-col h-[calc(100vh-2rem)]">
       {/* Original Post */}
@@ -132,14 +160,26 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">
-                {originalPost.is_anonymous ? "Anonymous" : originalPost.profiles.username}
-              </h3>
-              <span className="text-sm text-gray-500">
-                {formatDistanceToNow(new Date(originalPost.created_at), { addSuffix: true })}
-              </span>
+              <div>
+                <h3 className="font-semibold">
+                  {originalPost.is_anonymous ? "Anonymous" : originalPost.profiles.username}
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {formatDistanceToNow(new Date(originalPost.created_at), { addSuffix: true })}
+                </span>
+              </div>
+              {currentUser && (
+                <UserActionsMenu
+                  targetUserId={originalPosterId}
+                  currentUserId={currentUser.id}
+                />
+              )}
             </div>
-            <p className="mt-2 text-gray-700">{originalPost.content}</p>
+            {isUserMuted(originalPosterId) ? (
+              <p className="mt-2 text-gray-500 italic">Content hidden from muted user</p>
+            ) : (
+              <p className="mt-2 text-gray-700">{originalPost.content}</p>
+            )}
           </div>
         </div>
       </div>
@@ -151,40 +191,52 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
         ) : comments?.length === 0 ? (
           <div className="text-center text-gray-500">No comments yet</div>
         ) : (
-          comments?.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">
-                    {comment.is_anonymous ? "Anonymous" : comment.profiles.username}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                    </span>
-                    {currentUser?.id === comment.author_id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(comment.id)}
-                        className="h-8 w-8"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
+          comments?.filter(comment => !isUserBlocked(comment.author_id))
+            .map((comment) => (
+              <div key={comment.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                  <User className="w-4 h-4" />
                 </div>
-                <p className="text-gray-700 mt-1">{comment.content}</p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">
+                        {comment.is_anonymous ? "Anonymous" : comment.profiles.username}
+                      </span>
+                      <span className="text-sm text-gray-500 ml-2">
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {currentUser?.id === comment.author_id ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(comment.id)}
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      ) : currentUser && (
+                        <UserActionsMenu
+                          targetUserId={comment.author_id}
+                          currentUserId={currentUser.id}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {isUserMuted(comment.author_id) ? (
+                    <p className="text-gray-500 italic mt-1">Content hidden from muted user</p>
+                  ) : (
+                    <p className="text-gray-700 mt-1">{comment.content}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            ))
         )}
       </div>
 
-      {/* Comment Input Form - Fixed at bottom */}
+      {/* Comment Input Form */}
       <div className="border-t p-4 bg-white">
         <form onSubmit={handleSubmit} className="space-y-2">
           <Input

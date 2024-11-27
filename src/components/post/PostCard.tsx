@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CommentSection } from "./CommentSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { UserActionsMenu } from "./UserActionsMenu";
 
 interface PostCardProps {
   post: {
@@ -28,6 +29,40 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [isLiking, setIsLiking] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  const { data: isMuted } = useQuery({
+    queryKey: ["isMuted", post.author_id],
+    queryFn: async () => {
+      if (!currentUser) return false;
+      const { count } = await supabase
+        .from('muted_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('muter_id', currentUser.id)
+        .eq('muted_id', post.author_id);
+      return count > 0;
+    },
+  });
+
+  const { data: isBlocked } = useQuery({
+    queryKey: ["isBlocked", post.author_id],
+    queryFn: async () => {
+      if (!currentUser) return false;
+      const { count } = await supabase
+        .from('blocked_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('blocker_id', currentUser.id)
+        .eq('blocked_id', post.author_id);
+      return count > 0;
+    },
+  });
 
   const handleLike = async () => {
     try {
@@ -93,6 +128,10 @@ export const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
+  if (isBlocked) {
+    return null; // Don't show blocked users' posts
+  }
+
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <div className="flex items-start gap-3">
@@ -101,30 +140,44 @@ export const PostCard = ({ post }: PostCardProps) => {
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">
-              {post.is_anonymous ? "Anonymous" : post.profiles.username}
-            </h3>
-            <span className="text-sm text-gray-500">
-              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-            </span>
-          </div>
-          <p className="mt-2 text-gray-700">{post.content}</p>
-          {post.media_url && (
-            <div className="mt-3">
-              {post.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                <img 
-                  src={post.media_url} 
-                  alt="Post attachment" 
-                  className="rounded-lg max-h-96 w-auto"
-                />
-              ) : post.media_url.match(/\.(mp4|webm)$/i) ? (
-                <video 
-                  src={post.media_url} 
-                  controls 
-                  className="rounded-lg max-h-96 w-auto"
-                />
-              ) : null}
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">
+                {post.is_anonymous ? "Anonymous" : post.profiles.username}
+              </h3>
+              <span className="text-sm text-gray-500">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </span>
             </div>
+            {currentUser && (
+              <UserActionsMenu
+                targetUserId={post.author_id}
+                currentUserId={currentUser.id}
+              />
+            )}
+          </div>
+          {isMuted ? (
+            <p className="mt-2 text-gray-500 italic">Content hidden from muted user</p>
+          ) : (
+            <>
+              <p className="mt-2 text-gray-700">{post.content}</p>
+              {post.media_url && (
+                <div className="mt-3">
+                  {post.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                    <img 
+                      src={post.media_url} 
+                      alt="Post attachment" 
+                      className="rounded-lg max-h-96 w-auto"
+                    />
+                  ) : post.media_url.match(/\.(mp4|webm)$/i) ? (
+                    <video 
+                      src={post.media_url} 
+                      controls 
+                      className="rounded-lg max-h-96 w-auto"
+                    />
+                  ) : null}
+                </div>
+              )}
+            </>
           )}
           <div className="flex items-center gap-4 mt-4">
             <Button 
