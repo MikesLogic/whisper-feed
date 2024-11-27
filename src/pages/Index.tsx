@@ -10,6 +10,7 @@ import { Navigation } from "@/components/Navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { Sheet } from "@/components/ui/sheet";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
