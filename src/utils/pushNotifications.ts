@@ -18,13 +18,22 @@ export async function subscribeToPushNotifications() {
       applicationServerKey: publicVapidKey
     });
 
+    // Convert PushSubscription to a plain object that can be stored as JSONB
+    const subscriptionObject = {
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.getKey ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))) : null,
+        auth: subscription.getKey ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')))) : null,
+      }
+    };
+
     // Store subscription in Supabase
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
     const { error } = await supabase
       .from('settings')
-      .update({ push_subscription: subscription })
+      .update({ push_subscription: subscriptionObject })
       .eq('user_id', user.id);
 
     if (error) throw error;
