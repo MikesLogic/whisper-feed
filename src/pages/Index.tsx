@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Bell, MessageSquare } from "lucide-react";
+import { Menu, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Navigation } from "@/components/Navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
+import { NotificationCount } from "@/components/notifications/NotificationCount";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
@@ -67,14 +68,17 @@ const Index = () => {
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 bg-primary z-50">
           <div className="flex items-center justify-between px-4 h-14">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-primary-hover"
-              onClick={() => setIsMenuOpen(true)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-primary-hover"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+                <NotificationCount className="absolute -top-1 -right-1" />
+              </Button>
+            </div>
             <h1 className="text-xl font-semibold text-white">Anomours</h1>
             <div className="flex items-center gap-2">
               <Button
@@ -85,18 +89,9 @@ const Index = () => {
               >
                 <MessageSquare className="h-6 w-6" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-primary-hover"
-                onClick={() => setIsNotificationsOpen(true)}
-              >
-                <Bell className="h-6 w-6" />
-              </Button>
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="flex overflow-x-auto bg-white">
             {tabs.map((tab) => (
               <button
@@ -114,7 +109,6 @@ const Index = () => {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="pt-28 px-4 pb-20 max-w-2xl mx-auto">
           <CreatePost />
           <DailyPrompt />

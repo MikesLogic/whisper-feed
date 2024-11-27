@@ -1,4 +1,4 @@
-import { Menu, User, Bell, Search, Settings } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
@@ -7,6 +7,8 @@ import { SearchModal } from "./modals/SearchModal";
 import { NotificationsModal } from "./modals/NotificationsModal";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { NavigationContent } from "./navigation/NavigationContent";
+import { NotificationCount } from "./notifications/NotificationCount";
 
 interface NavigationProps {
   profile: {
@@ -28,25 +30,18 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
   const { toast } = useToast();
 
   useEffect(() => {
-    // Detect platform
     const ua = window.navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(ua));
     setIsAndroid(/android/.test(ua));
-    
-    // Check if already installed
     setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
 
-    // Listen for beforeinstallprompt (Chrome/Edge/Android Chrome)
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   useEffect(() => {
@@ -64,10 +59,7 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
 
     handleLocationChange();
     window.addEventListener('popstate', handleLocationChange);
-
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, [location]);
 
   const handleInstallClick = async () => {
@@ -95,17 +87,6 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
     }
   };
 
-  const handleModalOpen = (modalType: typeof activeModal) => {
-    setActiveModal(modalType);
-  };
-
-  const handleModalClose = () => {
-    if (location.search.includes('modal=')) {
-      navigate(-1);
-    }
-    setActiveModal(null);
-  };
-
   const showInstallButton = (deferredPrompt || isIOS || isAndroid) && !isStandalone;
 
   return (
@@ -131,71 +112,32 @@ export const Navigation = ({ profile, onClose, onLogout, isOpen }: NavigationPro
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <div className="space-y-4 mt-10">
-              <button
-                onClick={() => handleModalOpen('profile')}
-                className="flex items-center gap-2 w-full p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <User className="h-5 w-5" />
-                {profile?.username || 'Profile'}
-              </button>
-              <button
-                onClick={() => handleModalOpen('notifications')}
-                className="flex items-center gap-2 w-full p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <Bell className="h-5 w-5" />
-                Notifications
-              </button>
-              <button
-                onClick={() => handleModalOpen('search')}
-                className="flex items-center gap-2 w-full p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <Search className="h-5 w-5" />
-                Search
-              </button>
-              <button
-                onClick={() => handleModalOpen('settings')}
-                className="flex items-center gap-2 w-full p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <Settings className="h-5 w-5" />
-                Settings
-              </button>
-              {showInstallButton && (
-                <Button
-                  onClick={handleInstallClick}
-                  className="w-full"
-                  variant="outline"
-                >
-                  Install App
-                </Button>
-              )}
-              <Button 
-                onClick={onLogout}
-                variant="destructive"
-                className="w-full"
-              >
-                Sign Out
-              </Button>
-            </div>
+            <NavigationContent
+              profile={profile}
+              onModalOpen={setActiveModal}
+              onLogout={onLogout}
+              showInstallButton={showInstallButton}
+              handleInstallClick={handleInstallClick}
+            />
           </div>
         </div>
       </div>
 
       <ProfileEditModal
         isOpen={activeModal === 'profile'}
-        onClose={handleModalClose}
+        onClose={() => setActiveModal(null)}
       />
       <SettingsModal
         isOpen={activeModal === 'settings'}
-        onClose={handleModalClose}
+        onClose={() => setActiveModal(null)}
       />
       <SearchModal
         isOpen={activeModal === 'search'}
-        onClose={handleModalClose}
+        onClose={() => setActiveModal(null)}
       />
       <NotificationsModal
         isOpen={activeModal === 'notifications'}
-        onClose={handleModalClose}
+        onClose={() => setActiveModal(null)}
       />
     </>
   );
