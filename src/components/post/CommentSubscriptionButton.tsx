@@ -26,6 +26,7 @@ export const CommentSubscriptionButton = ({ postId, currentUserId }: CommentSubs
         .single();
       return !!data;
     },
+    enabled: !!currentUserId,
   });
 
   const handleToggleSubscription = async () => {
