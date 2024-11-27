@@ -14,15 +14,30 @@ const Profile = () => {
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
 
+  // First, try to get the profile by either UUID or username
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Try UUID first
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let query;
+      
+      if (uuidRegex.test(userId || '')) {
+        query = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+      } else {
+        // If not UUID, try username
+        query = supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', userId)
+          .single();
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -37,17 +52,18 @@ const Profile = () => {
   });
 
   const { data: followStats } = useQuery({
-    queryKey: ["followStats", userId],
+    queryKey: ["followStats", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const [followers, following] = await Promise.all([
         supabase
           .from('follows')
           .select('*', { count: 'exact', head: true })
-          .eq('following_id', userId),
+          .eq('following_id', profile.id),
         supabase
           .from('follows')
           .select('*', { count: 'exact', head: true })
-          .eq('follower_id', userId),
+          .eq('follower_id', profile.id),
       ]);
       return {
         followers: followers.count || 0,
@@ -57,14 +73,15 @@ const Profile = () => {
   });
 
   const { data: isFollowing } = useQuery({
-    queryKey: ["isFollowing", userId],
+    queryKey: ["isFollowing", profile?.id],
+    enabled: !!profile?.id && !!currentUser,
     queryFn: async () => {
       if (!currentUser) return false;
       const { count } = await supabase
         .from('follows')
         .select('*', { count: 'exact', head: true })
         .eq('follower_id', currentUser.id)
-        .eq('following_id', userId);
+        .eq('following_id', profile.id);
       return count > 0;
     },
   });
@@ -95,8 +112,8 @@ const Profile = () => {
               Back
             </Button>
           </Link>
-          {currentUser && currentUser.id !== userId && (
-            <FollowButton userId={userId} isFollowing={isFollowing || false} />
+          {currentUser && currentUser.id !== profile.id && (
+            <FollowButton userId={profile.id} isFollowing={isFollowing || false} />
           )}
         </div>
         <ProfileCard profile={profile} />
@@ -116,13 +133,13 @@ const Profile = () => {
         </div>
         <PostFeed filter="recent" userId={profile.id} />
         <FollowListModal
-          userId={userId}
+          userId={profile.id}
           type="followers"
           isOpen={showFollowers}
           onClose={() => setShowFollowers(false)}
         />
         <FollowListModal
-          userId={userId}
+          userId={profile.id}
           type="following"
           isOpen={showFollowing}
           onClose={() => setShowFollowing(false)}
