@@ -48,10 +48,8 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
         query = query.eq('author_id', userId);
       }
 
+      // Handle different filter types
       switch (filter) {
-        case "popular":
-          query = query.order('likes(count)', { ascending: false });
-          break;
         case "following":
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return { data: [], nextPage: null };
@@ -67,6 +65,10 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
         case "commented":
           query = query.order('comments(count)', { ascending: false });
           break;
+        case "popular":
+          // For popular posts, we'll sort by created_at first and then sort by likes in JavaScript
+          query = query.order('created_at', { ascending: false });
+          break;
         default:
           query = query.order('created_at', { ascending: false });
       }
@@ -74,8 +76,13 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
       const { data: posts, error } = await query;
       if (error) throw error;
 
+      // Sort by likes count if filter is "popular"
+      const sortedPosts = filter === "popular"
+        ? [...posts].sort((a, b) => (b.likes?.count || 0) - (a.likes?.count || 0))
+        : posts;
+
       return {
-        data: posts,
+        data: sortedPosts,
         nextPage: posts.length === PAGE_SIZE ? pageParam + 1 : null,
       };
     },
