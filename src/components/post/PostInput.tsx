@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Loader2 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
-import { Command } from "@/components/ui/command";
+import { 
+  Command,
+  CommandList,
+  CommandItem,
+} from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PostInputProps {
@@ -115,17 +119,17 @@ export const PostInput = ({
             {showMentions && mentionResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border">
                 <Command className="rounded-lg border shadow-md">
-                  <Command.List>
+                  <CommandList>
                     {mentionResults.map((user) => (
-                      <Command.Item
+                      <CommandItem
                         key={user.username}
                         onSelect={() => insertMention(user.username)}
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                       >
                         @{user.username}
-                      </Command.Item>
+                      </CommandItem>
                     ))}
-                  </Command.List>
+                  </CommandList>
                 </Command>
               </div>
             )}
