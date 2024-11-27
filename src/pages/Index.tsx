@@ -65,20 +65,22 @@ const Index = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 bg-white border-b z-50">
+        <header className="fixed top-0 left-0 right-0 bg-primary z-50">
           <div className="flex items-center justify-between px-4 h-14">
             <Button
               variant="ghost"
               size="icon"
+              className="text-white hover:bg-primary-hover"
               onClick={() => setIsMenuOpen(true)}
             >
               <Menu className="h-6 w-6" />
             </Button>
-            <h1 className="text-xl font-semibold text-primary">Anomours</h1>
+            <h1 className="text-xl font-semibold text-white">Anomo World</h1>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
+                className="text-white hover:bg-primary-hover"
                 onClick={() => setIsChatOpen(true)}
               >
                 <MessageSquare className="h-6 w-6" />
@@ -86,6 +88,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                className="text-white hover:bg-primary-hover"
                 onClick={() => setIsNotificationsOpen(true)}
               >
                 <Bell className="h-6 w-6" />
@@ -94,11 +97,11 @@ const Index = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto">
+          <div className="flex overflow-x-auto bg-white">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                className={`flex-1 px-4 py-2 text-sm font-medium border-b-2 ${
+                className={`flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "border-primary text-primary"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
