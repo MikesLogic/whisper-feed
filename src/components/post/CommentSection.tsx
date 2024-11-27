@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommentHeader } from "./CommentHeader";
 import { PostHeader } from "./PostHeader";
+import { PostMenu } from "./PostMenu";
+import { CommentSubscriptionButton } from "./CommentSubscriptionButton";
 
 interface CommentSectionProps {
   postId: string;
@@ -109,10 +111,6 @@ export const CommentSection = ({
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Comment added successfully",
-      });
       setNewComment("");
       setIsAnonymous(false);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -158,19 +156,32 @@ export const CommentSection = ({
     <div className="flex flex-col h-[calc(100vh-2rem)]">
       {/* Original Post */}
       <div className="p-4 border-b">
-        <PostHeader
-          username={originalPost.profiles.username}
-          createdAt={originalPost.created_at}
-          isAnonymous={originalPost.is_anonymous}
-          authorId={originalPosterId}
-          currentUserId={currentUser?.id}
-          avatarUrl={originalPost.profiles.avatar_url}
-        />
+        <div className="flex justify-between items-start">
+          <PostHeader
+            username={originalPost.profiles.username}
+            createdAt={originalPost.created_at}
+            isAnonymous={originalPost.is_anonymous}
+            authorId={originalPosterId}
+            currentUserId={currentUser?.id}
+            avatarUrl={originalPost.profiles.avatar_url}
+          />
+          <PostMenu
+            postId={postId}
+            authorId={originalPosterId}
+            currentUserId={currentUser?.id}
+          />
+        </div>
         {isUserMuted(originalPosterId) ? (
           <p className="mt-2 text-gray-500 italic">Content hidden from muted user</p>
         ) : (
           <p className="mt-2 text-gray-700">{originalPost.content}</p>
         )}
+        <div className="mt-2">
+          <CommentSubscriptionButton
+            postId={postId}
+            currentUserId={currentUser?.id}
+          />
+        </div>
       </div>
 
       {/* Comments List */}
@@ -183,15 +194,22 @@ export const CommentSection = ({
           comments?.filter(comment => !isUserBlocked(comment.author_id))
             .map((comment) => (
               <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
-                <CommentHeader
-                  username={comment.profiles.username}
-                  createdAt={comment.created_at}
-                  isAnonymous={comment.is_anonymous}
-                  authorId={comment.author_id}
-                  currentUserId={currentUser?.id}
-                  avatarUrl={comment.profiles.avatar_url}
-                  onDelete={() => handleDelete(comment.id)}
-                />
+                <div className="flex justify-between items-start">
+                  <CommentHeader
+                    username={comment.profiles.username}
+                    createdAt={comment.created_at}
+                    isAnonymous={comment.is_anonymous}
+                    authorId={comment.author_id}
+                    currentUserId={currentUser?.id}
+                    avatarUrl={comment.profiles.avatar_url}
+                  />
+                  <PostMenu
+                    postId={comment.id}
+                    authorId={comment.author_id}
+                    currentUserId={currentUser?.id}
+                    onDelete={() => handleDelete(comment.id)}
+                  />
+                </div>
                 {isUserMuted(comment.author_id) ? (
                   <p className="text-gray-500 italic mt-1">Content hidden from muted user</p>
                 ) : (
