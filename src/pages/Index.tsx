@@ -9,14 +9,12 @@ import { DailyPrompt } from "@/components/DailyPrompt";
 import { Navigation } from "@/components/Navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NotificationsModal } from "@/components/modals/NotificationsModal";
-import { Sheet } from "@/components/ui/sheet";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [profile, setProfile] = useState<{ username: string } | null>(null);
   const { toast } = useToast();
 
@@ -80,13 +78,6 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsChatOpen(true)}
-              >
-                <MessageSquare className="h-6 w-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={() => setIsNotificationsOpen(true)}
               >
                 <Bell className="h-6 w-6" />
@@ -133,10 +124,8 @@ const Index = () => {
           onClose={() => setIsNotificationsOpen(false)}
         />
 
-        {/* Chat Sheet */}
-        <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <ChatDrawer />
-        </Sheet>
+        {/* Chat Drawer */}
+        <ChatDrawer />
       </div>
     </TooltipProvider>
   );
