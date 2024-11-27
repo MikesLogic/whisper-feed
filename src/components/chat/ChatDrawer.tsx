@@ -7,8 +7,12 @@ import { ChatMessages } from "./ChatMessages";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const ChatDrawer = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface ChatDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const ChatDrawer = ({ isOpen, onClose }: ChatDrawerProps) => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
 
   const { data: currentUser } = useQuery({
@@ -39,38 +43,27 @@ export const ChatDrawer = () => {
   });
 
   return (
-    <>
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed bottom-4 right-4 rounded-full h-12 w-12"
-        onClick={() => setIsOpen(true)}
-      >
-        <MessageSquare className="h-6 w-6" />
-      </Button>
-
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
-          <div className="flex h-full">
-            <div className={`w-full ${selectedConversation ? 'hidden sm:block sm:w-1/3' : 'w-full'} border-r`}>
-              <ConversationList
-                conversations={conversations || []}
-                currentUserId={currentUser?.id}
-                onSelectConversation={setSelectedConversation}
-                selectedConversationId={selectedConversation}
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+        <div className="flex h-full">
+          <div className={`w-full ${selectedConversation ? 'hidden sm:block sm:w-1/3' : 'w-full'} border-r`}>
+            <ConversationList
+              conversations={conversations || []}
+              currentUserId={currentUser?.id}
+              onSelectConversation={setSelectedConversation}
+              selectedConversationId={selectedConversation}
+            />
+          </div>
+          {selectedConversation && (
+            <div className="w-full sm:w-2/3">
+              <ChatMessages
+                conversationId={selectedConversation}
+                onBack={() => setSelectedConversation(null)}
               />
             </div>
-            {selectedConversation && (
-              <div className="w-full sm:w-2/3">
-                <ChatMessages
-                  conversationId={selectedConversation}
-                  onBack={() => setSelectedConversation(null)}
-                />
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
