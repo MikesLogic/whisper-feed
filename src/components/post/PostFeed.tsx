@@ -78,7 +78,7 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
 
       // Sort by likes count if filter is "popular"
       const sortedPosts = filter === "popular"
-        ? [...posts].sort((a, b) => (b.likes?.count || 0) - (a.likes?.count || 0))
+        ? [...posts].sort((a, b) => ((b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0)))
         : posts;
 
       return {
