@@ -54,7 +54,48 @@ export const ChatMessages = ({ conversationId, onBack }: ChatMessagesProps) => {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        () => {
+        async (payload) => {
+          if (payload.eventType === 'INSERT' && payload.new.sender_id !== currentUser?.id) {
+            // Get sender's username
+            const { data: senderProfile } = await supabase
+              .from('profiles')
+              .select('username')
+              .eq('id', payload.new.sender_id)
+              .single();
+
+            // Create notification
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: currentUser?.id,
+                content: payload.new.content,
+                type: 'chat',
+              });
+
+            // If the user has granted notification permission, show the notification
+            if (Notification.permission === 'granted') {
+              const { data: settings } = await supabase
+                .from('settings')
+                .select('push_subscription')
+                .eq('user_id', currentUser?.id)
+                .single();
+
+              if (settings?.push_subscription) {
+                await fetch('/api/push-notification', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    subscription: settings.push_subscription,
+                    title: `Message from ${senderProfile?.username || 'Someone'}`,
+                    body: payload.new.content,
+                    type: 'chat',
+                  }),
+                });
+              }
+            }
+          }
           queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
         }
       )
@@ -63,7 +104,7 @@ export const ChatMessages = ({ conversationId, onBack }: ChatMessagesProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, queryClient]);
+  }, [conversationId, queryClient, currentUser?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

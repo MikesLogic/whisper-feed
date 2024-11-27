@@ -14,8 +14,13 @@ self.addEventListener('push', event => {
       
       // Update the message to show count
       const count = existingNotifications.length + 1;
-      title = `${title} (${count})`;
-      body = `You have ${count} new notifications`;
+      if (tag === 'chat') {
+        title = `New messages (${count})`;
+        body = `You have ${count} unread messages`;
+      } else {
+        title = `${title} (${count})`;
+        body = `You have ${count} new notifications`;
+      }
     }
     
     const options = {
@@ -25,7 +30,8 @@ self.addEventListener('push', event => {
       tag, // Use the tag for grouping
       renotify: true, // Notify the user even if there's an existing notification
       data: {
-        url: data.url
+        url: data.url || '/',
+        type: tag
       }
     };
 
@@ -35,7 +41,13 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  
+  // If it's a chat notification, open the chat drawer
+  const url = event.notification.data.type === 'chat' 
+    ? '/?chat=open' 
+    : (event.notification.data.url || '/');
+    
   event.waitUntil(
-    clients.openWindow(event.notification.data.url || '/')
+    clients.openWindow(url)
   );
 });
