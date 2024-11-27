@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BlockedMutedUsers } from "@/components/settings/BlockedMutedUsers";
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from "@/utils/pushNotifications";
-import { useEffect } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -50,18 +49,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     },
   });
 
-  // Apply theme from settings when component mounts or settings change
-  useEffect(() => {
-    if (settings?.theme) {
-      if (settings.theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  }, [settings?.theme]);
-
-  const updateSetting = async (field: string, value: boolean | string) => {
+  const updateSetting = async (field: string, value: boolean) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -80,20 +68,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     }
 
     queryClient.invalidateQueries({ queryKey: ["userSettings"] });
-  };
-
-  const handleThemeChange = async (theme: string) => {
-    await updateSetting('theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    toast({
-      title: "Success",
-      description: `Theme updated to ${theme} mode`,
-    });
   };
 
   const handlePushNotificationToggle = async (checked: boolean) => {
@@ -142,17 +116,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 checked={settings?.email_notifications || false}
                 onCheckedChange={(checked) => updateSetting('email_notifications', checked)}
               />
-            </div>
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Theme</label>
-              <select
-                className="border rounded p-1"
-                value={settings?.theme || 'light'}
-                onChange={(e) => handleThemeChange(e.target.value)}
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
             </div>
           </div>
           

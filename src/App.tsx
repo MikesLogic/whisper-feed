@@ -21,25 +21,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setIsAuthenticated(!!session);
     });
 
-    // Load theme from settings when app starts
-    const loadTheme = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: settings } = await supabase
-          .from('settings')
-          .select('theme')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (settings?.theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-    };
-
-    loadTheme();
     return () => subscription.unsubscribe();
   }, []);
 
