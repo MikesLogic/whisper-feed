@@ -57,12 +57,13 @@ export const PostContent = ({ content, mediaUrl, isMuted }: PostContentProps) =>
     const segments = text.split(/(\s+)/);
     
     return segments.map((segment, index) => {
-      // Handle hashtags
+      // Handle hashtags - now linking to hashtag search
       if (segment.startsWith('#')) {
+        const hashtag = segment.slice(1); // Remove the # symbol
         return (
           <Link
             key={index}
-            to={`/hashtag/${segment.slice(1)}`}
+            to={`/hashtag/${hashtag}`}
             className="text-primary hover:underline"
           >
             {segment}

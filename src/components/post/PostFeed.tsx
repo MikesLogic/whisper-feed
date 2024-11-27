@@ -10,9 +10,10 @@ const PAGE_SIZE = 10;
 interface PostFeedProps {
   filter?: "popular" | "recent" | "following" | "commented";
   userId?: string;
+  hashtag?: string;
 }
 
-export const PostFeed = ({ filter = "recent", userId }: PostFeedProps) => {
+export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) => {
   const { ref, inView } = useInView();
 
   const {
@@ -22,7 +23,7 @@ export const PostFeed = ({ filter = "recent", userId }: PostFeedProps) => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["posts", filter, userId],
+    queryKey: ["posts", filter, userId, hashtag],
     queryFn: async ({ pageParam = 0 }) => {
       let query = supabase
         .from('posts')
@@ -36,6 +37,11 @@ export const PostFeed = ({ filter = "recent", userId }: PostFeedProps) => {
           comments:comments(count)
         `)
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+
+      // Add hashtag filter if provided
+      if (hashtag) {
+        query = query.ilike('content', `%#${hashtag}%`);
+      }
 
       // Add user filter if provided
       if (userId) {
@@ -111,7 +117,7 @@ export const PostFeed = ({ filter = "recent", userId }: PostFeedProps) => {
 
       {data?.pages[0].data.length === 0 && (
         <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
-          No posts yet
+          {hashtag ? `No posts found with #${hashtag}` : 'No posts yet'}
         </div>
       )}
     </div>
