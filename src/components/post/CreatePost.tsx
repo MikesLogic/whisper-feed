@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const CreatePost = () => {
   const [postContent, setPostContent] = useState("");
@@ -13,6 +14,7 @@ export const CreatePost = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
@@ -82,6 +84,9 @@ export const CreatePost = () => {
       setPostContent("");
       setIsAnonymous(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      
+      // Invalidate and refetch posts
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     } catch (error) {
       toast({
         title: "Error",

@@ -1,5 +1,6 @@
 import { UserActionsMenu } from "./UserActionsMenu";
 import { formatDistanceToNow } from "date-fns";
+import { User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PostHeaderProps {
@@ -22,9 +23,11 @@ export const PostHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={avatarUrl || ""} alt={username} />
-          <AvatarFallback>{username[0]?.toUpperCase()}</AvatarFallback>
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={isAnonymous ? undefined : avatarUrl} alt={username} />
+          <AvatarFallback>
+            <User className="h-5 w-5" />
+          </AvatarFallback>
         </Avatar>
         <div>
           <p className="font-medium text-sm">
@@ -35,10 +38,12 @@ export const PostHeader = ({
           </p>
         </div>
       </div>
-      <UserActionsMenu
-        targetUserId={authorId}
-        currentUserId={currentUserId}
-      />
+      {currentUserId && currentUserId !== authorId && (
+        <UserActionsMenu
+          targetUserId={authorId}
+          currentUserId={currentUserId}
+        />
+      )}
     </div>
   );
 };
