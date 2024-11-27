@@ -16,7 +16,7 @@ const Landing = () => {
           title: "Welcome!",
           description: "You have successfully signed in.",
         });
-        navigate("/");
+        navigate("/home");
       } else if (event === "SIGNED_OUT") {
         toast({
           title: "Signed out",
@@ -33,7 +33,7 @@ const Landing = () => {
     // Check if user is already signed in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate("/home");
       }
     });
 
