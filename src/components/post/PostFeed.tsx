@@ -63,10 +63,8 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
           query = query.in('author_id', followingIds.map(f => f.following_id));
           break;
         case "commented":
-          query = query.order('comments(count)', { ascending: false });
-          break;
         case "popular":
-          // For popular posts, we'll sort by created_at first and then sort by likes in JavaScript
+          // For both commented and popular, we'll sort by created_at first and then sort in JavaScript
           query = query.order('created_at', { ascending: false });
           break;
         default:
@@ -76,10 +74,13 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
       const { data: posts, error } = await query;
       if (error) throw error;
 
-      // Sort by likes count if filter is "popular"
-      const sortedPosts = filter === "popular"
-        ? [...posts].sort((a, b) => ((b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0)))
-        : posts;
+      // Sort posts based on filter type
+      let sortedPosts = [...posts];
+      if (filter === "popular") {
+        sortedPosts.sort((a, b) => ((b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0)));
+      } else if (filter === "commented") {
+        sortedPosts.sort((a, b) => ((b.comments?.[0]?.count || 0) - (a.comments?.[0]?.count || 0)));
+      }
 
       return {
         data: sortedPosts,
