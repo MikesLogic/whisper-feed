@@ -27,18 +27,27 @@ export default {
         primary: {
           DEFAULT: "#00BFB3",
           hover: "#00A89D",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--background))",
-          foreground: "hsl(var(--foreground))",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         accent: {
           DEFAULT: "#2B96CC",
-          foreground: "#FFFFFF",
+          foreground: "hsl(var(--accent-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--border))",
-          foreground: "hsl(var(--foreground))",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
       },
       keyframes: {
