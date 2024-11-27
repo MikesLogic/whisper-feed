@@ -1,11 +1,13 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
+import { Toggle } from "@/components/ui/toggle";
+import { useQuery } from "@tanstack/react-query";
 
 export const CreatePost = () => {
   const [postContent, setPostContent] = useState("");
@@ -13,9 +15,25 @@ export const CreatePost = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPosting, setIsPosting] = useState(false);
+  const [useDailyPrompt, setUseDailyPrompt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: dailyPrompt } = useQuery({
+    queryKey: ["dailyPrompt"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('daily_prompts')
+        .select('*')
+        .eq('active_date', today)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
@@ -72,10 +90,14 @@ export const CreatePost = () => {
         }
       }
 
+      const finalContent = useDailyPrompt && dailyPrompt 
+        ? `${postContent}\n\n#DailyPrompt${dailyPrompt.id}`
+        : postContent;
+
       const { error } = await supabase
         .from('posts')
         .insert({
-          content: postContent,
+          content: finalContent,
           author_id: user.id,
           is_anonymous: isAnonymous,
           media_url: mediaUrl,
@@ -85,6 +107,7 @@ export const CreatePost = () => {
       
       setPostContent("");
       setIsAnonymous(false);
+      setUseDailyPrompt(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -99,6 +122,15 @@ export const CreatePost = () => {
     }
   };
 
+  const handleTogglePrompt = () => {
+    setUseDailyPrompt(!useDailyPrompt);
+    if (!useDailyPrompt && dailyPrompt) {
+      setPostContent(dailyPrompt.content);
+    } else {
+      setPostContent("");
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
       <div className="flex items-start gap-3">
@@ -106,12 +138,14 @@ export const CreatePost = () => {
           <User className="w-6 h-6" />
         </div>
         <div className="flex-1">
-          <Input
-            placeholder="Add to the Conversation..."
-            value={postContent}
-            onChange={(e) => setPostContent(e.target.value)}
-            className="mb-3"
-          />
+          <div className="mb-3">
+            <Textarea
+              placeholder="Add to the Conversation..."
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+              className="min-h-[100px] resize-y"
+            />
+          </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <input
@@ -136,6 +170,15 @@ export const CreatePost = () => {
                 ) : null}
                 Upload
               </Button>
+              {dailyPrompt && (
+                <Toggle
+                  pressed={useDailyPrompt}
+                  onPressedChange={handleTogglePrompt}
+                  className="px-3"
+                >
+                  Daily Prompt
+                </Toggle>
+              )}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
