@@ -82,17 +82,11 @@ export const CreatePost = () => {
         });
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post created successfully!",
-      });
       
       setPostContent("");
       setIsAnonymous(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       
-      // Invalidate and refetch posts immediately
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
     } catch (error) {
       toast({

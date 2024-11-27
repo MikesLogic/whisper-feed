@@ -81,11 +81,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       }
 
       await updateSetting('notifications_enabled', checked);
-      
-      toast({
-        title: "Success",
-        description: checked ? "Push notifications enabled" : "Push notifications disabled",
-      });
     } catch (error) {
       toast({
         title: "Error",

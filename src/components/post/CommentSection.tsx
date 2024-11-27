@@ -133,10 +133,6 @@ export const CommentSection = ({
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Comment deleted successfully",
-      });
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     } catch (error) {
