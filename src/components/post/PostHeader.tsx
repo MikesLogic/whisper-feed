@@ -1,7 +1,8 @@
-import { UserActionsMenu } from "./UserActionsMenu";
 import { formatDistanceToNow } from "date-fns";
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserActionsMenu } from "./UserActionsMenu";
+import { Link } from "react-router-dom";
 
 interface PostHeaderProps {
   username: string;
@@ -20,24 +21,42 @@ export const PostHeader = ({
   currentUserId,
   avatarUrl,
 }: PostHeaderProps) => {
+  if (isAnonymous) {
+    return (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Avatar className="w-8 h-8">
+            <AvatarFallback>
+              <User className="w-4 h-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <span className="font-medium">Anonymous</span>
+            <span className="text-sm text-gray-500 ml-2">
+              {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={isAnonymous ? undefined : avatarUrl} alt={username} />
+      <Link to={`/profile/${authorId}`} className="flex items-center gap-2 hover:opacity-80">
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={avatarUrl} />
           <AvatarFallback>
-            <User className="h-5 w-5" />
+            <User className="w-4 h-4" />
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium text-sm">
-            {isAnonymous ? "Anonymous" : username}
-          </p>
-          <p className="text-xs text-gray-500">
+          <span className="font-medium">{username}</span>
+          <span className="text-sm text-gray-500 ml-2">
             {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          </p>
+          </span>
         </div>
-      </div>
+      </Link>
       {currentUserId && currentUserId !== authorId && (
         <UserActionsMenu
           targetUserId={authorId}

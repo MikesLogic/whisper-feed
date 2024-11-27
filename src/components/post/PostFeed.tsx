@@ -7,7 +7,12 @@ import { useInView } from "react-intersection-observer";
 
 const PAGE_SIZE = 10;
 
-export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" | "following" | "commented" }) => {
+interface PostFeedProps {
+  filter?: "popular" | "recent" | "following" | "commented";
+  userId?: string;
+}
+
+export const PostFeed = ({ filter = "recent", userId }: PostFeedProps) => {
   const { ref, inView } = useInView();
 
   const {
@@ -17,7 +22,7 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["posts", filter],
+    queryKey: ["posts", filter, userId],
     queryFn: async ({ pageParam = 0 }) => {
       let query = supabase
         .from('posts')
@@ -31,6 +36,11 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
           comments:comments(count)
         `)
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+
+      // Add user filter if provided
+      if (userId) {
+        query = query.eq('author_id', userId);
+      }
 
       switch (filter) {
         case "popular":
@@ -65,8 +75,8 @@ export const PostFeed = ({ filter = "recent" }: { filter?: "popular" | "recent" 
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 1000,
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
