@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, Bell, Settings, Search } from "lucide-react";
+import { Menu, Bell, Settings, Search, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,10 +8,14 @@ import { PostFeed } from "@/components/post/PostFeed";
 import { DailyPrompt } from "@/components/DailyPrompt";
 import { Navigation } from "@/components/Navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { NotificationsModal } from "@/components/modals/NotificationsModal";
+import { Sheet } from "@/components/ui/sheet";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [profile, setProfile] = useState<{ username: string } | null>(null);
   const { toast } = useToast();
 
@@ -71,9 +75,22 @@ const Index = () => {
               <Menu className="h-6 w-6" />
             </Button>
             <h1 className="text-xl font-semibold text-primary">Anomours</h1>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-6 w-6" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageSquare className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsNotificationsOpen(true)}
+              >
+                <Bell className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -108,6 +125,17 @@ const Index = () => {
           onLogout={handleLogout}
           isOpen={isMenuOpen}
         />
+
+        {/* Notifications Modal */}
+        <NotificationsModal
+          isOpen={isNotificationsOpen}
+          onClose={() => setIsNotificationsOpen(false)}
+        />
+
+        {/* Chat Sheet */}
+        <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+          <ChatDrawer />
+        </Sheet>
       </div>
     </TooltipProvider>
   );
