@@ -35,18 +35,16 @@ export const PostInput = ({
 
   const showExpandedView = isFocused || postContent.length > 0;
 
-  // Handle clicks outside the component
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      containerRef.current && 
-      !containerRef.current.contains(event.target as Node)
-    ) {
-      setIsFocused(false);
-    }
-  };
-
-  // Add and remove event listener
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current && 
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsFocused(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -56,7 +54,7 @@ export const PostInput = ({
   return (
     <div 
       ref={containerRef}
-      className={`transition-all duration-300 ${showExpandedView ? 'min-h-[120px]' : 'min-h-[60px]'}`}
+      className="transition-all duration-300"
     >
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
@@ -69,13 +67,12 @@ export const PostInput = ({
               value={postContent}
               onChange={(e) => onContentChange(e.target.value)}
               onFocus={() => setIsFocused(true)}
-              className={`min-h-[40px] resize-y transition-all duration-300 ${
-                showExpandedView ? 'min-h-[60px]' : 'min-h-[40px]'
-              }`}
+              className="min-h-[40px] resize-none"
+              rows={3}
             />
           </div>
           {showExpandedView && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-2">
                 <input
                   type="file"
@@ -114,16 +111,17 @@ export const PostInput = ({
                   Anonymous
                 </label>
               </div>
-              {postContent.length > 0 && (
-                <Button 
-                  onClick={onPost}
-                  disabled={isPosting}
-                  size="sm"
-                >
-                  {isPosting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Post
-                </Button>
-              )}
+              <Button 
+                onClick={onPost}
+                disabled={isPosting || !postContent.trim()}
+                size="sm"
+                className="ml-2"
+              >
+                {isPosting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                Post
+              </Button>
             </div>
           )}
         </div>

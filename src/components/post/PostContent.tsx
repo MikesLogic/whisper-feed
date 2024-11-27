@@ -3,12 +3,11 @@ import { Link } from "react-router-dom";
 
 interface PostContentProps {
   content: string;
-  postId: string;
   mediaUrl?: string | null;
   isMuted?: boolean;
 }
 
-export const PostContent = ({ content, postId, mediaUrl, isMuted }: PostContentProps) => {
+export const PostContent = ({ content, mediaUrl, isMuted }: PostContentProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const lines = content.split('\n');
   const shouldTruncate = lines.length > 4;
@@ -27,12 +26,12 @@ export const PostContent = ({ content, postId, mediaUrl, isMuted }: PostContentP
         {displayContent}
         {shouldTruncate && !isExpanded && (
           <div className="mt-2">
-            <Link
-              to={`/post/${postId}`}
+            <button
+              onClick={() => setIsExpanded(true)}
               className="text-primary hover:text-primary-hover"
             >
               Read more...
-            </Link>
+            </button>
           </div>
         )}
       </div>
