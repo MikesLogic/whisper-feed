@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { User, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { UserActionsMenu } from "./UserActionsMenu";
+import { CommentHeader } from "./CommentHeader";
+import { PostHeader } from "./PostHeader";
 
 interface CommentSectionProps {
   postId: string;
@@ -16,13 +15,19 @@ interface CommentSectionProps {
     content: string;
     profiles: {
       username: string;
+      avatar_url?: string | null;
     };
     created_at: string;
     is_anonymous: boolean;
   };
 }
 
-export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, originalPost }: CommentSectionProps) => {
+export const CommentSection = ({ 
+  postId, 
+  isAnonymousPost, 
+  originalPosterId, 
+  originalPost 
+}: CommentSectionProps) => {
   const [newComment, setNewComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const { toast } = useToast();
@@ -60,8 +65,6 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
     },
   });
 
-  const canPostAnonymously = isAnonymousPost && currentUser?.id === originalPosterId;
-
   const { data: comments, isLoading } = useQuery({
     queryKey: ["comments", postId],
     queryFn: async () => {
@@ -69,7 +72,7 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
         .from('comments')
         .select(`
           *,
-          profiles!comments_author_id_fkey (username)
+          profiles (username, avatar_url)
         `)
         .eq('post_id', postId)
         .order('created_at', { ascending: false });
@@ -93,7 +96,7 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
     try {
       if (!currentUser) throw new Error("Not authenticated");
 
-      const finalIsAnonymous = canPostAnonymously ? isAnonymous : false;
+      const finalIsAnonymous = isAnonymousPost && isAnonymous;
 
       const { error } = await supabase
         .from('comments')
@@ -149,39 +152,25 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
 
   const isUserBlocked = (userId: string) => blockedUsers?.includes(userId);
   const isUserMuted = (userId: string) => mutedUsers?.includes(userId);
+  const canPostAnonymously = isAnonymousPost && currentUser?.id === originalPosterId;
 
   return (
     <div className="flex flex-col h-[calc(100vh-2rem)]">
       {/* Original Post */}
       <div className="p-4 border-b">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-            <User className="w-6 h-6" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">
-                  {originalPost.is_anonymous ? "Anonymous" : originalPost.profiles.username}
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {formatDistanceToNow(new Date(originalPost.created_at), { addSuffix: true })}
-                </span>
-              </div>
-              {currentUser && (
-                <UserActionsMenu
-                  targetUserId={originalPosterId}
-                  currentUserId={currentUser.id}
-                />
-              )}
-            </div>
-            {isUserMuted(originalPosterId) ? (
-              <p className="mt-2 text-gray-500 italic">Content hidden from muted user</p>
-            ) : (
-              <p className="mt-2 text-gray-700">{originalPost.content}</p>
-            )}
-          </div>
-        </div>
+        <PostHeader
+          username={originalPost.profiles.username}
+          createdAt={originalPost.created_at}
+          isAnonymous={originalPost.is_anonymous}
+          authorId={originalPosterId}
+          currentUserId={currentUser?.id}
+          avatarUrl={originalPost.profiles.avatar_url}
+        />
+        {isUserMuted(originalPosterId) ? (
+          <p className="mt-2 text-gray-500 italic">Content hidden from muted user</p>
+        ) : (
+          <p className="mt-2 text-gray-700">{originalPost.content}</p>
+        )}
       </div>
 
       {/* Comments List */}
@@ -193,44 +182,21 @@ export const CommentSection = ({ postId, isAnonymousPost, originalPosterId, orig
         ) : (
           comments?.filter(comment => !isUserBlocked(comment.author_id))
             .map((comment) => (
-              <div key={comment.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">
-                        {comment.is_anonymous ? "Anonymous" : comment.profiles.username}
-                      </span>
-                      <span className="text-sm text-gray-500 ml-2">
-                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {currentUser?.id === comment.author_id ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(comment.id)}
-                          className="h-8 w-8"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      ) : currentUser && (
-                        <UserActionsMenu
-                          targetUserId={comment.author_id}
-                          currentUserId={currentUser.id}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  {isUserMuted(comment.author_id) ? (
-                    <p className="text-gray-500 italic mt-1">Content hidden from muted user</p>
-                  ) : (
-                    <p className="text-gray-700 mt-1">{comment.content}</p>
-                  )}
-                </div>
+              <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                <CommentHeader
+                  username={comment.profiles.username}
+                  createdAt={comment.created_at}
+                  isAnonymous={comment.is_anonymous}
+                  authorId={comment.author_id}
+                  currentUserId={currentUser?.id}
+                  avatarUrl={comment.profiles.avatar_url}
+                  onDelete={() => handleDelete(comment.id)}
+                />
+                {isUserMuted(comment.author_id) ? (
+                  <p className="text-gray-500 italic mt-1">Content hidden from muted user</p>
+                ) : (
+                  <p className="text-gray-700 mt-1">{comment.content}</p>
+                )}
               </div>
             ))
         )}
