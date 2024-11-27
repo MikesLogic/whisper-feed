@@ -5,6 +5,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostActions } from "./PostActions";
+import { PostMenu } from "./PostMenu";
 
 interface PostCardProps {
   post: {
@@ -123,20 +124,51 @@ export const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete post",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isBlocked) {
     return null;
   }
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <PostHeader
-        username={post.profiles.username}
-        createdAt={post.created_at}
-        isAnonymous={post.is_anonymous}
-        authorId={post.author_id}
-        currentUserId={currentUser?.id}
-        avatarUrl={post.profiles.avatar_url}
-      />
+      <div className="flex justify-between items-start">
+        <PostHeader
+          username={post.profiles.username}
+          createdAt={post.created_at}
+          isAnonymous={post.is_anonymous}
+          authorId={post.author_id}
+          currentUserId={currentUser?.id}
+          avatarUrl={post.profiles.avatar_url}
+        />
+        <PostMenu
+          postId={post.id}
+          authorId={post.author_id}
+          currentUserId={currentUser?.id}
+          onDelete={handleDelete}
+        />
+      </div>
       <PostContent 
         content={post.content}
         mediaUrl={post.media_url}
