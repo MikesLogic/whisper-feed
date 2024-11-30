@@ -1,13 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, Calendar } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { 
   Command,
   CommandList,
   CommandItem,
 } from "@/components/ui/command";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PostInputProps {
@@ -156,13 +162,25 @@ export const PostInput = ({
                   Upload
                 </Button>
                 {dailyPrompt && (
-                  <Toggle
-                    pressed={useDailyPrompt}
-                    onPressedChange={onPromptToggle}
-                    className="px-3"
-                  >
-                    Daily Prompt
-                  </Toggle>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Toggle
+                          pressed={useDailyPrompt}
+                          onPressedChange={onPromptToggle}
+                          className="px-3"
+                        >
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Daily Prompt
+                        </Toggle>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[300px]">
+                        <p className="text-sm">
+                          Today&apos;s Prompt: {dailyPrompt.content}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
