@@ -37,6 +37,25 @@ export const InputControls = ({
   return (
     <div className="flex items-center justify-between mt-2">
       <div className="flex items-center gap-2">
+        {dailyPrompt && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  pressed={useDailyPrompt}
+                  onPressedChange={onPromptToggle}
+                  size="sm"
+                  className="px-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-sm">Use daily prompt</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <input
           type="file"
           ref={fileInputRef}
