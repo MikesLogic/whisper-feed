@@ -1,19 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useRef } from "react";
+import { User } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Loader2, Calendar } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
-import { 
-  Command,
-  CommandList,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { InputControls } from "./InputControls";
+import { DailyPromptToggle } from "./DailyPromptToggle";
+import { MentionsList } from "./MentionsList";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PostInputProps {
@@ -41,43 +31,23 @@ export const PostInput = ({
   onPost,
   isPosting,
 }: PostInputProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [mentionSearch, setMentionSearch] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionResults, setMentionResults] = useState<Array<{ username: string }>>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const showExpandedView = isFocused || postContent.length > 0;
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current && 
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsFocused(false);
-        setShowMentions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const handleContentChange = async (content: string) => {
     onContentChange(content);
     
-    // Check for @ mentions
     const lastWord = content.split(/\s/).pop() || "";
     if (lastWord.startsWith("@") && lastWord.length > 1) {
       setMentionSearch(lastWord.slice(1));
       setShowMentions(true);
       
-      // Search for users
       const { data } = await supabase
         .from('profiles')
         .select('username')
@@ -90,28 +60,20 @@ export const PostInput = ({
     }
   };
 
-  const insertMention = (username: string) => {
-    if (!textareaRef.current) return;
-
-    const content = postContent;
-    const lastIndex = content.lastIndexOf("@");
-    const newContent = content.substring(0, lastIndex) + `@${username} `;
-    
-    onContentChange(newContent);
-    setShowMentions(false);
-    textareaRef.current.focus();
-  };
-
   return (
-    <div 
-      ref={containerRef}
-      className="transition-all duration-300"
-    >
+    <div ref={containerRef}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
           <User className="w-6 h-6" />
         </div>
         <div className="flex-1">
+          {dailyPrompt && (
+            <DailyPromptToggle
+              dailyPrompt={dailyPrompt}
+              useDailyPrompt={useDailyPrompt}
+              onPromptToggle={onPromptToggle}
+            />
+          )}
           <div className="mb-2 relative">
             <Textarea
               ref={textareaRef}
@@ -122,88 +84,32 @@ export const PostInput = ({
               className="min-h-[40px] resize-none"
               rows={3}
             />
-            {showMentions && mentionResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border">
-                <Command className="rounded-lg border shadow-md">
-                  <CommandList>
-                    {mentionResults.map((user) => (
-                      <CommandItem
-                        key={user.username}
-                        onSelect={() => insertMention(user.username)}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      >
-                        @{user.username}
-                      </CommandItem>
-                    ))}
-                  </CommandList>
-                </Command>
-              </div>
-            )}
+            <MentionsList
+              show={showMentions}
+              results={mentionResults}
+              onSelect={(username) => {
+                if (!textareaRef.current) return;
+                const content = postContent;
+                const lastIndex = content.lastIndexOf("@");
+                const newContent = content.substring(0, lastIndex) + `@${username} `;
+                onContentChange(newContent);
+                setShowMentions(false);
+                textareaRef.current.focus();
+              }}
+            />
           </div>
           {showExpandedView && (
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*,video/*"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      onFileSelect(e.target.files[0]);
-                    }
-                  }}
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Upload
-                </Button>
-                {dailyPrompt && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Toggle
-                          pressed={useDailyPrompt}
-                          onPressedChange={onPromptToggle}
-                          className="px-3"
-                        >
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Daily Prompt
-                        </Toggle>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-[300px]">
-                        <p className="text-sm">
-                          Today&apos;s Prompt: {dailyPrompt.content}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isAnonymous}
-                    onChange={(e) => onAnonymousChange(e.target.checked)}
-                    className="rounded"
-                  />
-                  Anonymous
-                </label>
-              </div>
-              <Button 
-                onClick={onPost}
-                disabled={isPosting || !postContent.trim()}
-                size="sm"
-                className="ml-2"
-              >
-                {isPosting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Post
-              </Button>
-            </div>
+            <InputControls
+              isAnonymous={isAnonymous}
+              onAnonymousChange={onAnonymousChange}
+              onFileSelect={onFileSelect}
+              onPost={onPost}
+              isPosting={isPosting}
+              postContent={postContent}
+              useDailyPrompt={useDailyPrompt}
+              dailyPrompt={dailyPrompt}
+              onPromptToggle={onPromptToggle}
+            />
           )}
         </div>
       </div>
