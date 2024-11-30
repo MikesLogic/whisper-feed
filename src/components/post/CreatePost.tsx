@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { PostInput } from "./PostInput";
 import { UploadProgress } from "./UploadProgress";
+import { DailyPromptToggle } from "./DailyPromptToggle";
 
 export const CreatePost = () => {
   const [postContent, setPostContent] = useState("");
@@ -116,6 +117,18 @@ export const CreatePost = () => {
 
   return (
     <div className="bg-white rounded-lg shadow p-4 sticky top-[7.5rem] z-40">
+      <DailyPromptToggle
+        dailyPrompt={dailyPrompt}
+        useDailyPrompt={useDailyPrompt}
+        onPromptToggle={() => {
+          setUseDailyPrompt(!useDailyPrompt);
+          if (!useDailyPrompt && dailyPrompt) {
+            setPostContent(dailyPrompt.content);
+          } else {
+            setPostContent("");
+          }
+        }}
+      />
       <PostInput
         postContent={postContent}
         isAnonymous={isAnonymous}

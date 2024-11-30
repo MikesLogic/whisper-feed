@@ -7,7 +7,10 @@ const urlsToCache = [
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/home',
+  '/profile',
+  '/hashtag'
 ];
 
 // Install event
@@ -28,12 +31,31 @@ self.addEventListener('fetch', event => {
           return response;
         }
 
-        // For navigation requests, return index.html
+        // For navigation requests, try the network first, fall back to index.html
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return fetch(event.request)
+            .catch(() => caches.match('/index.html'));
         }
 
-        return fetch(event.request);
+        // Try to fetch from network
+        return fetch(event.request)
+          .then(response => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response
+            const responseToCache = response.clone();
+
+            // Add to cache
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          });
       })
   );
 });
