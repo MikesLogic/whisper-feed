@@ -59,6 +59,7 @@ const Index = () => {
     { id: "popular", label: "Popular" },
     { id: "recent", label: "Recent" },
     { id: "following", label: "Following" },
+    { id: "daily", label: "Daily" },
     { id: "commented", label: "Commented" },
   ];
 
@@ -112,10 +113,9 @@ const Index = () => {
         <main className="pt-28 px-4 pb-20 max-w-2xl mx-auto">
           <CreatePost />
           <DailyPrompt />
-          <PostFeed filter={activeTab as "popular" | "recent" | "following" | "commented"} />
+          <PostFeed filter={activeTab as "popular" | "recent" | "following" | "commented" | "daily"} />
         </main>
 
-        {/* Navigation Menu */}
         <Navigation
           profile={profile}
           onClose={() => setIsMenuOpen(false)}
@@ -123,13 +123,11 @@ const Index = () => {
           isOpen={isMenuOpen}
         />
 
-        {/* Notifications Modal */}
         <NotificationsModal
           isOpen={isNotificationsOpen}
           onClose={() => setIsNotificationsOpen(false)}
         />
 
-        {/* Chat Drawer */}
         <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       </div>
     </TooltipProvider>

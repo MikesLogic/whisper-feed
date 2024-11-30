@@ -8,7 +8,7 @@ import { useInView } from "react-intersection-observer";
 const PAGE_SIZE = 10;
 
 interface PostFeedProps {
-  filter?: "popular" | "recent" | "following" | "commented";
+  filter?: "popular" | "recent" | "following" | "commented" | "daily";
   userId?: string;
   hashtag?: string;
 }
@@ -61,6 +61,20 @@ export const PostFeed = ({ filter = "recent", userId, hashtag }: PostFeedProps) 
 
           if (!followingIds?.length) return { data: [], nextPage: null };
           query = query.in('author_id', followingIds.map(f => f.following_id));
+          break;
+        case "daily":
+          // Get today's prompt
+          const today = new Date().toISOString().split('T')[0];
+          const { data: prompt } = await supabase
+            .from('daily_prompts')
+            .select('id')
+            .eq('active_date', today)
+            .single();
+          
+          if (prompt) {
+            query = query.ilike('content', `%#DailyPrompt${prompt.id}%`);
+          }
+          query = query.order('created_at', { ascending: false });
           break;
         case "commented":
         case "popular":
