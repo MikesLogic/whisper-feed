@@ -117,18 +117,22 @@ export const CreatePost = () => {
 
   return (
     <div className="bg-white rounded-lg shadow p-4 sticky top-[7.5rem] z-40">
-      <DailyPromptToggle
-        dailyPrompt={dailyPrompt}
-        useDailyPrompt={useDailyPrompt}
-        onPromptToggle={() => {
-          setUseDailyPrompt(!useDailyPrompt);
-          if (!useDailyPrompt && dailyPrompt) {
-            setPostContent(dailyPrompt.content);
-          } else {
-            setPostContent("");
-          }
-        }}
-      />
+      {dailyPrompt && (
+        <div className="mb-4">
+          <DailyPromptToggle
+            dailyPrompt={dailyPrompt}
+            useDailyPrompt={useDailyPrompt}
+            onPromptToggle={() => {
+              setUseDailyPrompt(!useDailyPrompt);
+              if (!useDailyPrompt && dailyPrompt) {
+                setPostContent(dailyPrompt.content);
+              } else {
+                setPostContent("");
+              }
+            }}
+          />
+        </div>
+      )}
       <PostInput
         postContent={postContent}
         isAnonymous={isAnonymous}

@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { User } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { InputControls } from "./InputControls";
-import { DailyPromptToggle } from "./DailyPromptToggle";
 import { MentionsList } from "./MentionsList";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -67,13 +66,6 @@ export const PostInput = ({
           <User className="w-6 h-6" />
         </div>
         <div className="flex-1">
-          {dailyPrompt && (
-            <DailyPromptToggle
-              dailyPrompt={dailyPrompt}
-              useDailyPrompt={useDailyPrompt}
-              onPromptToggle={onPromptToggle}
-            />
-          )}
           <div className="mb-2 relative">
             <Textarea
               ref={textareaRef}
