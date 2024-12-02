@@ -98,9 +98,6 @@ export const PostInput = ({
               onPost={onPost}
               isPosting={isPosting}
               postContent={postContent}
-              useDailyPrompt={useDailyPrompt}
-              dailyPrompt={dailyPrompt}
-              onPromptToggle={onPromptToggle}
             />
           )}
         </div>
