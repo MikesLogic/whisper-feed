@@ -13,7 +13,10 @@ export const DailyPrompt = () => {
         .eq('active_date', today)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching daily prompt:', error);
+        return null;
+      }
       return data;
     },
   });

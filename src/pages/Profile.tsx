@@ -8,38 +8,51 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/FollowButton";
 import { FollowListModal } from "@/components/modals/FollowListModal";
+import { useToast } from "@/components/ui/use-toast";
 
 const Profile = () => {
   const { userId } = useParams();
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const { toast } = useToast();
 
   // First, try to get the profile by either UUID or username
-  const { data: profile, isLoading: isLoadingProfile } = useQuery({
+  const { data: profile, isLoading: isLoadingProfile, error } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
       // Try UUID first
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       let query;
       
-      if (uuidRegex.test(userId || '')) {
-        query = supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-      } else {
-        // If not UUID, try username
-        query = supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', userId)
-          .single();
+      try {
+        if (uuidRegex.test(userId || '')) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+          
+          if (error) throw error;
+          return data;
+        } else {
+          // If not UUID, try username
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('username', userId)
+            .maybeSingle();
+          
+          if (error) throw error;
+          return data;
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: "Failed to load profile",
+          variant: "destructive",
+        });
+        throw error;
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     },
   });
 
@@ -96,8 +109,19 @@ const Profile = () => {
 
   if (!profile) {
     return (
-      <div className="p-4 text-center">
-        User not found
+      <div className="min-h-screen bg-background">
+        <div className="pt-16 px-4 pb-20 max-w-2xl mx-auto">
+          <Link to="/home">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </Link>
+          <div className="p-4 text-center">
+            <h2 className="text-xl font-semibold mb-2">Profile not found</h2>
+            <p className="text-gray-600">The user you're looking for doesn't exist.</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -147,6 +171,3 @@ const Profile = () => {
       </div>
     </div>
   );
-};
-
-export default Profile;
