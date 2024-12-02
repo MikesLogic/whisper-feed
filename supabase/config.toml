@@ -1,4 +1,4 @@
 project_id = "tuaavguqfgmeazqwgtcf"
 
-[functions.send-push-notification]
+[functions.upload-post-media]
 verify_jwt = true
