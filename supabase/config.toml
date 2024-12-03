@@ -1,4 +1,17 @@
 project_id = "tuaavguqfgmeazqwgtcf"
 
-[functions.upload-post-media]
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[[functions]]
+name = "upload-post-media"
 verify_jwt = true
