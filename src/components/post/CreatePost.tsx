@@ -42,15 +42,18 @@ export const CreatePost = () => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('https://tuaavguqfgmeazqwgtcf.functions.supabase.co/upload-post-media', {
-        method: 'POST',
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No access token');
+
+      const response = await supabase.functions.invoke('upload-post-media', {
         body: formData,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      if (!response.ok) throw new Error('Upload failed');
-
-      const { publicUrl } = await response.json();
-      return publicUrl;
+      if (response.error) throw response.error;
+      return response.data.publicUrl;
     } catch (error) {
       toast({
         title: "Error",
